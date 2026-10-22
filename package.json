@@ -1,0 +1,10 @@
+{
+  "name": "banana-ai-assistant",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Banana AI - hosted AI assistant with chat history, browser voice, research, and agent modes",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "dev": "node server.js" },
+  "engines": { "node": ">=18.17" },
+  "dependencies": { "dotenv": "^16.4.7", "express": "^4.21.2" }
+}

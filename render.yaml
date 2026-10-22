@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: banana-ai-assistant
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: AI_MODEL
+        value: openai/gpt-4o-mini
+      - key: TAVILY_API_KEY
+        sync: false

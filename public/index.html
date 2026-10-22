@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080a12">
+  <meta name="description" content="Banana AI personal assistant">
+  <title>Banana AI — Personal Assistant</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="/" aria-label="Banana AI home"><span class="brand-mark">✳</span><span>banana<span class="brand-ai">.ai</span></span></a>
+    <button id="newChat" class="new-chat"><span>＋</span> New conversation</button>
+    <div class="side-label">WORKSPACE</div>
+    <button class="nav-item active" data-mode="chat"><span>◈</span> AI Chat</button>
+    <button class="nav-item" data-mode="research"><span>⌕</span> Web research</button>
+    <div class="history-head"><span>RECENT CHATS</span><button id="refreshHistory" title="Refresh history">↻</button></div>
+    <div id="historyList" class="history-list"><div class="history-empty">Your conversations will appear here.</div></div>
+    <div class="sidebar-bottom"><div class="online-dot"></div><div><strong>Banana AI</strong><small>Your ideas, amplified.</small></div><span class="version">BETA</span></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <button id="mobileMenu" class="icon-btn mobile-only" aria-label="Open menu">☰</button>
+      <div class="top-title"><span class="live-dot"></span><span id="topMode">AI Assistant</span><span class="model-chip" id="modelChip">HOSTED AI</span></div>
+      <div class="top-actions"><button id="memoryBtn" class="quiet-btn" title="Edit your saved memory">♧ <span>Memory</span></button><button id="themeBtn" class="icon-btn" title="Toggle appearance">◐</button></div>
+    </header>
+    <section class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <div class="orb-wrap"><div class="orb"><span>✳</span></div><div class="orb-ring ring-one"></div><div class="orb-ring ring-two"></div></div>
+        <div class="eyebrow"><span class="eyebrow-line"></span> YOUR PERSONAL AI <span class="eyebrow-line"></span></div>
+        <h1>Make room for<br><span>big ideas.</span></h1>
+        <p class="welcome-copy">Think, build, learn, and create with Banana — your AI workspace for whatever comes next.</p>
+        <div class="suggestions">
+          <button class="suggestion" data-prompt="Explain a difficult topic to me in simple Roman Urdu."><span class="suggestion-icon">✧</span><span><strong>Learn something</strong><small>Understand a topic step by step</small></span><span class="arrow">↗</span></button>
+          <button class="suggestion" data-prompt="Help me plan and build a web application from scratch."><span class="suggestion-icon">⌘</span><span><strong>Build a project</strong><small>Turn an idea into working code</small></span><span class="arrow">↗</span></button>
+          <button class="suggestion" data-prompt="Help me organize my week with a realistic study plan."><span class="suggestion-icon">▦</span><span><strong>Plan my day</strong><small>Make a practical action plan</small></span><span class="arrow">↗</span></button>
+          <button class="suggestion" data-prompt="Write a professional message for me. Ask what it is for if needed."><span class="suggestion-icon">✎</span><span><strong>Write anything</strong><small>Draft, refine, and brainstorm</small></span><span class="arrow">↗</span></button>
+        </div>
+      </div>
+      <div id="messages" class="messages" aria-live="polite"></div>
+    </section>
+    <div class="composer-wrap">
+      <div class="tool-row">
+        <label class="agent-label">ASSISTANT MODE</label>
+        <select id="agentSelect" aria-label="Assistant mode">
+          <option value="general">✳ General</option><option value="coder">⌘ Coding</option><option value="study">▤ Study tutor</option><option value="writer">✎ Writing</option><option value="planner">▦ Planner</option><option value="researcher">⌕ Researcher</option>
+        </select>
+        <label class="research-toggle"><input id="researchToggle" type="checkbox"><span>Web research</span></label>
+      </div>
+      <form id="chatForm" class="composer">
+        <textarea id="prompt" rows="1" maxlength="8000" placeholder="Ask Banana anything..." autocomplete="off"></textarea>
+        <div class="composer-bottom"><div class="composer-tools"><button type="button" id="voiceBtn" class="tool-btn" title="Voice input">♩ <span>Voice</span></button><button type="button" id="speakToggle" class="tool-btn" title="Toggle spoken responses">◖ <span>Read aloud</span></button><span class="tool-hint">Enter to send · Shift+Enter for new line</span></div><button id="send" class="send-btn" type="submit" aria-label="Send message">↑</button></div>
+      </form>
+      <div class="disclaimer">Banana can make mistakes. Verify important information. <span>·</span> Your API key stays on the server.</div>
+    </div>
+  </main>
+</div>
+<div id="toast" class="toast" role="status"></div>
+<dialog id="memoryDialog" class="modal">
+  <form method="dialog" class="modal-head"><div><span class="modal-icon">♧</span><h2>Personal memory</h2></div><button class="icon-btn" aria-label="Close">×</button></form>
+  <p class="modal-copy">Add context you want Banana to use in future replies on this browser. Avoid passwords or sensitive information.</p>
+  <textarea id="memoryText" rows="5" placeholder="For example: I prefer simple explanations in Roman Urdu..."></textarea>
+  <div class="modal-actions"><button id="clearMemory" class="quiet-btn" type="button">Clear memory</button><button id="saveMemory" class="primary-btn" type="button">Save memory</button></div>
+</dialog>
+<script src="/app.js" defer></script>
+</body>
+</html>
