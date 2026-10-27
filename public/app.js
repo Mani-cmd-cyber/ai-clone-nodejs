@@ -416,6 +416,8 @@
   }
 
 
+  let startupSequenceEndsAt = 0;
+
   function playStartupSequence() {
     // Original synthesized sci-fi boot sound. Called directly from the login gesture
     // so browsers allow audio without requiring an extra sound-enable click.
@@ -425,6 +427,7 @@
       const ctx = new AudioContextClass();
       if (ctx.state === "suspended") ctx.resume();
       const now = ctx.currentTime;
+      startupSequenceEndsAt = performance.now() + 3650;
       const master = ctx.createGain();
       master.gain.setValueAtTime(0.0001, now);
       master.gain.linearRampToValueAtTime(0.34, now + 0.18);
@@ -495,26 +498,49 @@
   function welcomeUser(name) {
     const overlay = $("welcomeOverlay");
     const cleanName = String(name || "Janab").replace(/[<>]/g, "").slice(0, 80);
-    $("welcomeTitle").textContent = "SYSTEM ACTIVATED";
-    $("welcomeSubtitle").textContent = "Welcome " + cleanName + ". Your AI workspace is coming online.";
     overlay.hidden = false;
     overlay.classList.remove("boot-complete");
     document.body.classList.add("welcoming");
-    const progress = overlay.querySelector(".boot-progress span");
-    if (progress) { progress.style.animation = "none"; void progress.offsetWidth; progress.style.animation = ""; }
     const status = $("stageStatus");
-    if (status) status.textContent = "SYSTEM ACTIVATED · READY FOR YOUR COMMAND";
-    window.setTimeout(() => {
-      overlay.classList.add("boot-complete");
-      $("welcomeSubtitle").textContent = "All systems online. You can start chatting now.";
-    }, 2850);
-    window.setTimeout(() => {
+    const finishBoot = () => {
       overlay.hidden = true;
       overlay.classList.remove("boot-complete");
       document.body.classList.remove("welcoming");
       const prompt = $("prompt");
       if (prompt) prompt.focus({ preventScroll: true });
-    }, 3900);
+    };
+    // Let the startup sound finish first, then announce the ready state aloud.
+    const waitForSound = Math.max(0, startupSequenceEndsAt - performance.now());
+    window.setTimeout(() => {
+      $("welcomeTitle").textContent = "SYSTEM ACTIVATED";
+      $("welcomeSubtitle").textContent = "Welcome, sir. Your AI workspace is ready.";
+      overlay.classList.add("boot-complete");
+      if (status) status.textContent = "SYSTEM ACTIVATED · READY FOR YOUR COMMAND";
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("Welcome, sir. System activated.");
+        utterance.rate = 0.88;
+        utterance.pitch = 0.72;
+        utterance.volume = 0.82;
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = voices.find(v => /en-US|en-GB|en-IN/i.test(v.lang) && /natural|online|english|aria|guy/i.test(v.name))
+          || voices.find(v => /^en/i.test(v.lang));
+        if (preferred) utterance.voice = preferred;
+        let finished = false;
+        const closeAfterSpeech = () => {
+          if (finished) return;
+          finished = true;
+          window.clearTimeout(fallback);
+          finishBoot();
+        };
+        utterance.onend = closeAfterSpeech;
+        utterance.onerror = closeAfterSpeech;
+        const fallback = window.setTimeout(closeAfterSpeech, 5200);
+        window.speechSynthesis.speak(utterance);
+      } else {
+        window.setTimeout(finishBoot, 1200);
+      }
+    }, waitForSound);
   }
 
   async function initAuth() {
