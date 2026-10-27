@@ -335,7 +335,7 @@ app.get("/api/world-monitor", requireUser, async (req, res) => {
   }) : [];
   const headlines = sources[2].status === "fulfilled" ? (sources[2].value.articles || []).slice(0, 6).map(item => ({
     title: safeText(item.title, 240), url: safeText(item.url, 1000), source: safeText(item.domain || item.sourcecountry || "News source", 120), date: safeText(item.seendate, 80), snippet: safeText(item.snippet || "", 500)
-  })).filter(item => item.title && /^https?:\\/\\//i.test(item.url)) : [];
+  })).filter(item => { try { return item.title && ["http:", "https:"].includes(new URL(item.url).protocol); } catch { return false; } }) : [];
   const warnings = [];
   if (sources[0].status === "rejected") warnings.push("USGS earthquake feed is temporarily unavailable.");
   if (sources[1].status === "rejected") warnings.push("NASA event feed is temporarily unavailable.");
@@ -368,7 +368,7 @@ app.post("/api/research", requireUser, async (req, res) => {
       let url = m[1].replace(/&amp;/g, "&");
       try { const parsed = new URL(url, "https://html.duckduckgo.com"); url = parsed.searchParams.get("uddg") || url; } catch {}
       return { title: decode(m[2]), url: safeText(url, 1000), content: safeText(snippets[i] || "Open the source to read details.", 1800) };
-    }).filter(r => /^https?:\/\//i.test(r.url));
+    }).filter(r => { try { return ["http:", "https:"].includes(new URL(r.url).protocol); } catch { return false; } });
     if (!results.length) throw new Error("No public search results were returned.");
     res.json({ answer: "Open the linked sources to verify details.", provider: "DuckDuckGo", results });
   } catch (error) {
