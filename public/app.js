@@ -14,10 +14,78 @@
   }
 
   let recognition = null, pendingFiles = [];
-  // Audio is intentionally disabled: no ambient sounds or background beeps.
-  function syncCoreAudio() {}
-  function setCoreSound() {}
+  // Original soft sci-fi machine-core ambience, synthesized locally (no movie audio or external file).
+  let coreAudio = null, coreSoundOn = false;
+  function createCoreAudio() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) { toast("Ambient audio is not supported in this browser."); return false; }
+    if (coreAudio) return true;
+    const ctx = new AudioContextClass();
+    const master = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass"; filter.frequency.value = 1400; filter.Q.value = 0.8;
+    master.gain.value = 0;
+    filter.connect(master); master.connect(ctx.destination);
+
+    // Low continuous hum with gently detuned harmonics.
+    const droneA = ctx.createOscillator(), droneB = ctx.createOscillator(), shimmer = ctx.createOscillator();
+    const gainA = ctx.createGain(), gainB = ctx.createGain(), gainC = ctx.createGain();
+    droneA.type = "sine"; droneA.frequency.value = 55;
+    droneB.type = "sine"; droneB.frequency.value = 82.41; droneB.detune.value = -5;
+    shimmer.type = "sine"; shimmer.frequency.value = 164.81;
+    gainA.gain.value = 0.48; gainB.gain.value = 0.24; gainC.gain.value = 0.055;
+    droneA.connect(gainA); droneB.connect(gainB); shimmer.connect(gainC);
+    gainA.connect(filter); gainB.connect(filter); gainC.connect(filter);
+
+    // Soft repeating "tun-tun" pulse, like a fictional machine powering a core.
+    const pulse = ctx.createOscillator(), pulseGain = ctx.createGain();
+    const pulseLfo = ctx.createOscillator(), pulseLfoGain = ctx.createGain();
+    pulse.type = "sine"; pulse.frequency.value = 110;
+    pulseGain.gain.value = 0.16;
+    pulseLfo.type = "sine"; pulseLfo.frequency.value = 0.72; pulseLfoGain.gain.value = 0.08;
+    pulseLfo.connect(pulseLfoGain); pulseLfoGain.connect(pulseGain.gain);
+    pulse.connect(pulseGain); pulseGain.connect(filter);
+
+    const lfo = ctx.createOscillator(), lfoGain = ctx.createGain();
+    lfo.type = "sine"; lfo.frequency.value = 0.16; lfoGain.gain.value = 0.015;
+    lfo.connect(lfoGain); lfoGain.connect(master.gain);
+    droneA.start(); droneB.start(); shimmer.start(); pulse.start(); pulseLfo.start(); lfo.start();
+    coreAudio = { ctx, master, droneA, droneB, shimmer, pulse, pulseLfo, lfo };
+    return true;
+  }
+  // Original JARVIS-inspired electronic background motif; synthesized locally, not copied audio.
+  let ambientBeepTimer = null;
   function playAmbientBeep() {}
+  function scheduleAmbientBeeps() {}
+  async function syncCoreAudio() {
+    if (!coreAudio || !coreSoundOn) return;
+    // Keep ambient core running while the site is open, including during tasks and results.
+    try { if (coreAudio.ctx.state !== "running") await coreAudio.ctx.resume(); } catch {}
+    const target = document.body.classList.contains("ai-thinking") ? 0.032 : 0.025;
+    coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
+  }
+  function setCoreSound(enabled) {
+    // Sound is always enabled; this control is intentionally not an off switch.
+    coreSoundOn = true;
+    const button = $("ambienceBtn");
+    button.setAttribute("aria-pressed", "true");
+    button.classList.add("active");
+    button.innerHTML = '♫ <span>Core sound on</span>';
+    button.title = "JARVIS-style ambient sound is enabled";
+    document.body.classList.add("core-sound-enabled");
+    if (!createCoreAudio()) return;
+    syncCoreAudio();
+    scheduleAmbientBeeps();
+  }
+  // Try immediately on page load. Browsers may block autoplay until the visitor interacts once.
+  coreSoundOn = true;
+  setCoreSound(true);
+  const unlockCoreAudio = () => { if (coreSoundOn) syncCoreAudio(); };
+  ["pointerdown", "keydown", "touchstart"].forEach(eventName =>
+    document.addEventListener(eventName, unlockCoreAudio, { once: true, passive: true })
+  );
+  $("ambienceBtn").addEventListener("click", unlockCoreAudio);
+  document.addEventListener("visibilitychange", () => { syncCoreAudio(); if (!document.hidden && coreSoundOn) playAmbientBeep(); });
 
   function toast(text) {
     const el = $("toast"); el.textContent = text; el.classList.add("show");
@@ -248,13 +316,98 @@
   function renderCouncil(agents) {
     return `<div class="research-results"><h4>✳ BANANA AI COUNCIL · ${agents.length} SPECIALISTS</h4>${agents.map(agent => `<section class="research-result"><strong>${escapeHtml(agent.name)}</strong><p>${formatText(agent.answer)}</p></section>`).join("")}</div>`;
   }
-  // All audio output is disabled by request.
-  function announceMachine() {}
-  function speakText() {}
+  function speakJarvis(text, options = {}) {
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(String(text).slice(0, 5000));
+    utterance.rate = options.rate ?? 0.91;
+    utterance.pitch = options.pitch ?? 0.76;
+    utterance.volume = options.volume ?? 0.72;
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => /en-US|en-GB|en-IN/i.test(v.lang) && /natural|online|english|aria|guy/i.test(v.name))
+      || voices.find(v => /^en/i.test(v.lang));
+    if (preferred) utterance.voice = preferred;
+    window.speechSynthesis.speak(utterance);
+  }
+  function announceMachine(text) {
+    if (!("speechSynthesis" in window)) return;
+    // Keep status announcements in a queue so they don't cut each other off.
+    speakJarvis(text, { rate: 0.91, pitch: 0.76, volume: 0.72 });
+  }
+  function speakText(text, queue = false) {
+    if (!("speechSynthesis" in window)) return toast("Text-to-speech is not supported in this browser.");
+    if (!queue) window.speechSynthesis.cancel();
+    speakJarvis(text, { rate: 0.96, pitch: 0.82, volume: 0.78 });
+  }
   function playBeep() {}
+
   function playCompletionChime() {}
+
+
   let startupSequenceEndsAt = 0;
-  function playStartupSequence() {}
+
+  function playStartupSequence() {
+    // Original synthesized sci-fi boot sound. Called directly from the login gesture
+    // so browsers allow audio without requiring an extra sound-enable click.
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      startupSequenceEndsAt = performance.now() + 3650;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.linearRampToValueAtTime(0.34, now + 0.18);
+      master.gain.setValueAtTime(0.34, now + 2.45);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 3.65);
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass"; filter.frequency.setValueAtTime(950, now);
+      filter.frequency.exponentialRampToValueAtTime(5200, now + 1.1);
+      filter.frequency.exponentialRampToValueAtTime(1500, now + 3.5);
+      master.connect(filter); filter.connect(ctx.destination);
+
+      // Deep rising reactor tone
+      const bass = ctx.createOscillator(), bassGain = ctx.createGain();
+      bass.type = "sawtooth";
+      bass.frequency.setValueAtTime(54, now);
+      bass.frequency.exponentialRampToValueAtTime(108, now + 1.15);
+      bass.frequency.exponentialRampToValueAtTime(72, now + 3.3);
+      bassGain.gain.setValueAtTime(0.0001, now);
+      bassGain.gain.exponentialRampToValueAtTime(0.24, now + 0.38);
+      bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.45);
+      bass.connect(bassGain); bassGain.connect(master);
+      bass.start(now); bass.stop(now + 3.5);
+
+      // Three bright activation sweeps
+      [392, 587.33, 880, 1174.66].forEach((frequency, index) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        const start = now + [0.32, 0.88, 1.52, 2.38][index];
+        osc.type = index === 0 ? "triangle" : "sine";
+        osc.frequency.setValueAtTime(frequency * 0.72, start);
+        osc.frequency.exponentialRampToValueAtTime(frequency, start + 0.22);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(index === 3 ? 0.42 : 0.27, start + 0.055);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + (index === 3 ? 0.72 : 0.5));
+        osc.connect(gain); gain.connect(master);
+        osc.start(start); osc.stop(start + (index === 3 ? 0.76 : 0.54));
+      });
+
+      // Soft energy pulses timed with the rings and the final activation flash
+      [0.12, 0.72, 1.34, 2.05, 2.78].forEach((offset, index) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        const start = now + offset;
+        osc.type = "sine"; osc.frequency.setValueAtTime(index === 4 ? 110 : 76, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(index === 4 ? 0.22 : 0.11, start + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + (index === 4 ? 0.34 : 0.19));
+        osc.connect(gain); gain.connect(master);
+        osc.start(start); osc.stop(start + (index === 4 ? 0.36 : 0.21));
+      });
+      window.setTimeout(() => { try { ctx.close(); } catch {} }, 4200);
+    } catch (error) {
+      // Audio is an enhancement; the visual boot sequence still works if unavailable.
+    }
+  }
 
   function startBootOverlay() {
     const overlay = $("welcomeOverlay");
@@ -283,13 +436,37 @@
       const prompt = $("prompt");
       if (prompt) prompt.focus({ preventScroll: true });
     };
-    // Show activation visually without playing or speaking any sound.
-    const waitForSound = 0;
+    // Let the startup sound finish first, then announce the ready state aloud.
+    const waitForSound = Math.max(0, startupSequenceEndsAt - performance.now());
     window.setTimeout(() => {
       $("welcomeTitle").textContent = "SYSTEM ACTIVATED";
       $("welcomeSubtitle").textContent = "Welcome, sir. Your AI workspace is ready.";
       overlay.classList.add("boot-complete");
       if (status) status.textContent = "SYSTEM ACTIVATED · READY FOR YOUR COMMAND";
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("Welcome, sir. System activated.");
+        utterance.rate = 0.88;
+        utterance.pitch = 0.72;
+        utterance.volume = 0.82;
+        const voices = window.speechSynthesis.getVoices();
+        const preferred = voices.find(v => /en-US|en-GB|en-IN/i.test(v.lang) && /natural|online|english|aria|guy/i.test(v.name))
+          || voices.find(v => /^en/i.test(v.lang));
+        if (preferred) utterance.voice = preferred;
+        let finished = false;
+        const closeAfterSpeech = () => {
+          if (finished) return;
+          finished = true;
+          window.clearTimeout(fallback);
+          finishBoot();
+        };
+        utterance.onend = closeAfterSpeech;
+        utterance.onerror = closeAfterSpeech;
+        const fallback = window.setTimeout(closeAfterSpeech, 5200);
+        window.speechSynthesis.speak(utterance);
+      } else {
+        window.setTimeout(finishBoot, 1200);
+      }
     }, waitForSound);
   }
 
