@@ -210,3 +210,82 @@ body.light .auth-card input{background:#f3f4fa;color:var(--text)}
 @media(prefers-reduced-motion:reduce){.stage-orb,.stage-orbit,.stage-orb-halo,.stage-wave i,.stage-live-dot,.assistant-stage:before,.assistant-stage:after,.stage-orb-system:before,.stage-orb-system:after{animation:none!important}}
 body.light .assistant-stage{background:radial-gradient(ellipse at 26% 48%,#ddd4ffb8,transparent 42%),linear-gradient(115deg,#f8f8ff,#edfaff);border-color:#8175b84a}
 body.light .stage-status{color:#20233b}body.light .stage-kicker{color:#4f5875}body.light .stage-metrics{color:#6c7390}
+
+
+/* Intelligent conversation workspace refresh */
+:root{--chat-width:900px;--user-bubble:linear-gradient(135deg,rgba(167,139,250,.17),rgba(103,232,249,.09));--focus-ring:rgba(103,232,249,.22)}
+.chat-area{padding:30px clamp(16px,3vw,42px) 22px;scroll-behavior:smooth}
+.messages{max-width:var(--chat-width)}
+.message{gap:14px;margin:26px 0;line-height:1.85;align-items:flex-start}
+.message .avatar{width:35px;height:35px;flex-basis:35px;border-radius:12px;position:relative;box-shadow:0 5px 20px #0002}
+.message.assistant .avatar{box-shadow:0 0 22px #a78bfa26}
+.message.user{justify-content:flex-end}
+.message.user .avatar{order:2;background:rgba(103,232,249,.09);border-color:rgba(103,232,249,.2);color:var(--cyan)}
+.message.user .message-content{flex:0 1 auto;max-width:min(78%,720px);padding:12px 16px;border:1px solid rgba(167,139,250,.22);border-radius:17px 5px 17px 17px;background:var(--user-bubble);box-shadow:0 10px 30px #00012}
+.message.assistant .message-content{padding:3px 0 0;max-width:100%;color:var(--text);font-size:13px;letter-spacing:.005em}
+.message.assistant .message-content:before{content:"BANANA AI";display:block;margin:0 0 8px;font:9px 'DM Mono',monospace;letter-spacing:1.5px;color:var(--cyan);opacity:.9}
+.message-content p{margin:0 0 13px}
+.message-content strong{color:#f4f1ff;font-weight:800}
+body.light .message-content strong{color:#282243}
+.message-content h1,.message-content h2,.message-content h3{line-height:1.35;letter-spacing:-.4px;margin:20px 0 9px;color:#e8e2ff}
+.message-content h1{font-size:23px}.message-content h2{font-size:19px}.message-content h3{font-size:15px}
+.message-content ul,.message-content ol{padding-left:23px;margin:8px 0 16px}
+.message-content li{padding-left:3px;margin:5px 0}
+.message-content blockquote{margin:12px 0;padding:10px 14px;border-left:2px solid var(--purple);background:#a78bfa0b;color:#b9c2d7;border-radius:0 8px 8px 0}
+.message-content pre{position:relative;margin:13px 0 15px;padding:17px 16px;border-radius:12px;background:linear-gradient(145deg,#080b13,#0c1020);border-color:rgba(103,232,249,.18);box-shadow:inset 0 1px #ffffff08,0 8px 26px #0002;line-height:1.7}
+.message-content pre code{font-size:12px;white-space:pre}
+.message-content :not(pre)>code{padding:2px 6px;border:1px solid rgba(103,232,249,.14);border-radius:5px;background:rgba(103,232,249,.07);color:var(--cyan);font-size:.92em}
+.message-content a{text-decoration:none;border-bottom:1px solid #67e8f955;overflow-wrap:anywhere}
+.message-content a:hover{border-bottom-color:var(--cyan)}
+.message-actions{gap:7px;margin-top:13px;opacity:.72;transition:opacity .2s}
+.message:hover .message-actions{opacity:1}
+.message-actions button{padding:6px 9px;border-radius:7px;background:#ffffff04}
+.message-actions button:hover{color:var(--cyan);border-color:#67e8f944}
+.composer-wrap{width:min(920px,calc(100% - 42px));margin-bottom:17px}
+.tool-row{max-width:920px;margin:0 auto 10px;padding:0 3px}
+.composer{position:relative;border:1px solid rgba(167,139,250,.34);border-radius:19px;padding:15px 15px 11px 18px;background:linear-gradient(150deg,rgba(18,22,37,.98),rgba(12,16,28,.98));box-shadow:0 14px 40px #0003,0 0 0 1px #ffffff03 inset;backdrop-filter:blur(18px)}
+.composer:focus-within{border-color:rgba(103,232,249,.62);box-shadow:0 14px 42px #0003,0 0 0 3px var(--focus-ring)}
+.composer textarea{font-size:13px;line-height:1.8;min-height:30px;padding:2px 0}
+.composer textarea::placeholder{color:#7f8aa4}
+.composer-bottom{margin-top:11px;padding-top:9px;border-top:1px solid rgba(171,183,222,.08)}
+.composer-tools{gap:5px;flex-wrap:wrap}
+.tool-btn{border-color:transparent;transition:all .16s}
+.tool-btn:hover{transform:translateY(-1px)}
+.send-btn{width:39px;height:39px;border-radius:12px;transition:transform .15s,box-shadow .15s}
+.send-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 5px 22px #67e8f944}
+.disclaimer{font-size:9px;letter-spacing:.02em}
+.tool-row select{padding:7px 10px;font-size:11px}
+.agent-label{font-size:9px}
+.welcome{max-width:760px;margin:2vh auto 0}
+.welcome h1{letter-spacing:-2.2px}
+.welcome-copy{font-size:13px;max-width:470px}
+.suggestions{max-width:650px;gap:11px}
+.suggestion{min-height:76px;padding:14px 15px;border-radius:14px;background:linear-gradient(130deg,rgba(18,23,39,.9),rgba(14,18,30,.8));box-shadow:0 8px 24px #00010}
+.suggestion strong{font-size:12px}.suggestion small{font-size:11px;line-height:1.5}
+.suggestion-icon{width:36px;height:36px;border-radius:11px}
+#assistantStage{margin-bottom:18px}
+#assistantStage .stage-status{letter-spacing:-.3px}
+#chatArea.has-messages #assistantStage{margin-bottom:8px}
+body.light .message.user .message-content{background:linear-gradient(135deg,#eee9ff,#e6faff);border-color:#d7cff8}
+body.light .message.assistant .message-content h1,body.light .message.assistant .message-content h2,body.light .message.assistant .message-content h3{color:#34275f}
+body.light .message-content pre{background:#f0f2fa;border-color:#d7dcec}
+body.light .composer{background:rgba(255,255,255,.96)}
+@media(max-width:760px){
+ .chat-area{padding:17px 12px 14px}
+ .message{gap:9px;margin:20px 0}
+ .message .avatar{width:29px;height:29px;flex-basis:29px;border-radius:10px}
+ .message.user .message-content{max-width:86%;padding:10px 12px}
+ .message.assistant .message-content{font-size:12px}
+ .message-content h1{font-size:20px}.message-content h2{font-size:17px}.message-content h3{font-size:14px}
+ .message-content pre{padding:12px 10px;margin:10px 0}
+ .message-content pre code{font-size:11px}
+ .composer-wrap{width:calc(100% - 18px);margin-bottom:10px}
+ .composer{padding:12px 10px 9px 13px;border-radius:16px}
+ .composer textarea{font-size:12px}
+ .composer-bottom{align-items:flex-end}
+ .composer-tools{gap:3px}
+ .tool-btn{padding:6px}
+ .tool-row{flex-wrap:wrap}
+ .welcome h1{letter-spacing:-1.5px}
+}
+@media(prefers-reduced-motion:reduce){.message,.suggestion,.send-btn,.tool-btn{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
