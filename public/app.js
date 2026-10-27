@@ -302,7 +302,7 @@
     $("topMode").textContent = world ? "World Monitor" : research ? "Web Research" : "AI Assistant";
     $("researchToggle").checked = research; $("sidebar").classList.remove("open");
     $("worldMonitor").hidden = !world; messagesEl.hidden = world;
-    if (world) { welcome.hidden = true; promptInput.placeholder = "Ask Banana about the world, or use the dashboard above…"; loadWorldMonitor(); }
+    if (world) { welcome.hidden = true; promptInput.placeholder = "Ask Banana about the world, or use the dashboard above…"; $("agentSelect").value = "researcher"; $("researchToggle").checked = true; loadWorldMonitor(); }
     else { showWelcomeIfEmpty(); if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; } else { promptInput.placeholder = "Ask Banana anything..."; } }
     promptInput.focus();
   }));
