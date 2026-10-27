@@ -101,3 +101,5 @@ body.light .auth-card input{background:#f3f4fa;color:var(--text)}
 .computer-modal .modal-actions{gap:8px;flex-wrap:wrap}
 .computer-modal .modal-actions button{font-size:10px}
 @media(max-width:760px){.top-actions #computerBtn span{display:none}.computer-modal{max-width:calc(100% - 20px)}}
+
+.model-chip.status-warning{color:#fbbf24;border-color:#fbbf2444;background:#fbbf2410}
