@@ -150,6 +150,9 @@ async function requestAI(messages, options = {}) {
       if (error.name === "TimeoutError" || error.name === "AbortError") break;
     }
   }
+  if (lastError && /free-models-per-day|rate limit exceeded/i.test(lastError.message || "")) {
+    throw new Error("OpenRouter free-model daily limit reached. This limit is set by OpenRouter, not Banana AI. Wait for the quota reset or use a provider/API key with available credits; changing models cannot bypass this account limit.");
+  }
   throw lastError || new Error("Could not reach hosted AI.");
 }
 
