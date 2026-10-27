@@ -305,3 +305,38 @@ body.light .composer{background:rgba(255,255,255,.96)}
 .ai-thinking .stage-orb{box-shadow:0 0 38px #a78bfa88,0 0 82px #67e8f944,inset 0 0 25px #ffffff55}
 @keyframes core-pulse{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
 @media(max-width:760px){.ambience-btn{padding:7px 8px}.ambience-btn span{display:none}.ambience-btn.active:after{content:"ON";font:9px 'DM Mono',monospace}}
+
+
+/* Login-triggered cinematic boot sequence */
+.welcome-overlay{overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 48%,#1c2d5a 0%,#0a0d1b 42%,#03050b 100%);animation:bootScreenIn .55s ease both}
+.welcome-overlay:before,.welcome-overlay:after{inset:-8%;border-color:#67e8f91c;animation:bootFrameSpin 12s linear infinite}
+.welcome-overlay:after{inset:5%;border-color:#a78bfa22;animation-direction:reverse;animation-duration:17s}
+.boot-grid{position:absolute;inset:0;z-index:-1;opacity:.25;background-image:linear-gradient(#67e8f91a 1px,transparent 1px),linear-gradient(90deg,#67e8f91a 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at center,#000,transparent 76%);animation:bootGridMove 7s linear infinite}
+.welcome-scene{z-index:1;filter:drop-shadow(0 0 28px #67e8f933);animation:bootSceneFloat 3s ease-in-out infinite}
+.welcome-core{border-radius:50%;font-size:59px;box-shadow:inset 0 0 20px #fff8,0 0 32px #a78bfa99,0 0 70px #67e8f955,0 0 130px #67e8f922;animation:coreArrive 1.05s cubic-bezier(.2,.8,.2,1) both,bootCorePulse 1.15s ease-in-out infinite alternate}
+.welcome-orbit-one{width:200px;height:74px;border-width:2px;border-color:#67e8f9cc;animation:orbitSpin 2.8s linear infinite}
+.welcome-orbit-two{width:174px;height:112px;border-color:#bbaaffcc;animation:orbitSpin 3.7s linear infinite reverse}
+.welcome-orbit-three{width:218px;height:152px;border-style:dashed;border-color:#67e8f966;animation:orbitSpin 6s linear infinite}
+.welcome-kicker{display:flex;align-items:center;gap:9px;z-index:1;text-shadow:0 0 15px #67e8f988}
+.boot-dot{width:7px;height:7px;border-radius:50%;background:#69e6b1;box-shadow:0 0 14px #69e6b1;animation:bootDotPulse .7s ease-in-out infinite alternate}
+.welcome-overlay h2{z-index:1;font-size:clamp(30px,6vw,48px);letter-spacing:3px;text-shadow:0 0 24px #67e8f933;animation:bootTitleIn .65s .25s both}
+.welcome-overlay p{z-index:1;min-height:20px;letter-spacing:.3px}
+.boot-progress{z-index:1;width:min(290px,75vw);height:3px;background:#a78bfa22;overflow:hidden;border-radius:4px;margin:2px 0 15px}
+.boot-progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,#a78bfa,#67e8f9,#fff);box-shadow:0 0 13px #67e8f9;animation:bootProgress 3.75s cubic-bezier(.3,.6,.3,1) forwards}
+.boot-caption{z-index:1;display:flex;gap:22px;font:9px 'DM Mono',monospace;letter-spacing:1.4px;color:#7f8cae}
+.boot-caption span{color:#596781}
+.boot-spark{position:absolute;z-index:3;width:5px;height:5px;border-radius:50%;background:#e5fbff;box-shadow:0 0 12px 4px #67e8f977;animation:bootSpark 1.7s ease-in-out infinite alternate}
+.boot-spark-one{top:22%;left:19%}.boot-spark-two{top:63%;right:16%;animation-delay:.35s}.boot-spark-three{bottom:18%;left:30%;animation-delay:.7s}
+.welcome-overlay.boot-complete .welcome-core{animation:bootFinalFlash .65s ease-out both}
+.welcome-overlay.boot-complete .welcome-orbit{animation-duration:1s}
+@keyframes bootScreenIn{from{opacity:0;filter:blur(9px)}to{opacity:1;filter:blur(0)}}
+@keyframes bootFrameSpin{from{rotate:0deg;scale:.94}to{rotate:360deg;scale:1.06}}
+@keyframes bootGridMove{from{background-position:0 0}to{background-position:0 48px}}
+@keyframes bootSceneFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.025)}}
+@keyframes bootCorePulse{from{filter:brightness(.88) saturate(.9)}to{filter:brightness(1.35) saturate(1.3)}}
+@keyframes bootDotPulse{from{opacity:.45;transform:scale(.75)}to{opacity:1;transform:scale(1.2)}}
+@keyframes bootTitleIn{from{opacity:0;transform:translateY(12px);letter-spacing:8px}to{opacity:1;transform:translateY(0);letter-spacing:3px}}
+@keyframes bootProgress{0%{width:0}18%{width:18%}48%{width:49%}76%{width:78%}100%{width:100%}}
+@keyframes bootSpark{from{opacity:.25;transform:translate3d(0,0,0) scale(.7)}to{opacity:1;transform:translate3d(10px,-14px,0) scale(1.4)}}
+@keyframes bootFinalFlash{0%{filter:brightness(1);transform:scale(1)}45%{filter:brightness(2.3);transform:scale(1.14)}100%{filter:brightness(1.15);transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.boot-grid,.boot-spark,.welcome-overlay:before,.welcome-overlay:after{animation:none!important}.boot-progress span{animation-duration:1s}}
