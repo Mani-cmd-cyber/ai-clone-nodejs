@@ -159,8 +159,10 @@ app.post("/api/auth/login", async (req, res) => {
     if (!storageReady() || !SESSION_SECRET) return res.status(503).json({ error: "Account storage is not configured yet." });
     const email = safeText(req.body?.email, 254).toLowerCase();
     const password = typeof req.body?.password === "string" ? req.body.password : "";
+    const displayName = safeText(req.body?.name, 80);
     const user = await readJson(userPath(email));
     if (!user || !verifyPassword(password, user)) return res.status(401).json({ error: "Email or password is incorrect." });
+    if (displayName) { user.name = displayName; await writeJson(userPath(email), user); }
     setSessionCookie(res, user);
     return res.json({ user: { id: user.id, email: user.email, name: user.name || "" } });
   } catch (error) { return serverError(res, "Login error", error); }
