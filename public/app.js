@@ -187,6 +187,7 @@
       $("accountEmail").textContent = user.email || "";
       const name = (user.name || (user.email || "Janab").split("@")[0].replace(/[._-]+/g, " ")).trim() || "Janab";
       $("accountEmail").title = name;
+      $("homeWelcomeTitle").innerHTML = "Welcome, Janab<br><span>" + escapeHtml(name) + " — let’s create something.</span>";
       refreshHistory();
       if (announce) welcomeUser(name);
     };
