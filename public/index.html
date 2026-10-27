@@ -72,7 +72,7 @@
       <form id="chatForm" class="composer">
         <div id="attachmentChip" class="attachment-chip" hidden><span id="attachmentName"></span><button type="button" id="removeAttachment" aria-label="Remove attachment">×</button></div>
         <textarea id="prompt" rows="1" maxlength="8000" placeholder="Ask Banana anything..." autocomplete="off"></textarea>
-        <div class="composer-bottom"><div class="composer-tools"><input id="fileInput" type="file" hidden accept=".txt,.md,.csv,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.xml,.log,.yaml,.yml,.sql,.m,.cpp,.c,.h,.java,.sh,.ps1"><button type="button" id="attachBtn" class="tool-btn" title="Attach a text or code file">📎 <span>Attach file</span></button><button type="button" id="voiceBtn" class="tool-btn" title="Voice input">♩ <span>Voice</span></button><button type="button" id="speakToggle" class="tool-btn" title="Toggle spoken responses">◖ <span>Read aloud</span></button><span class="tool-hint">Enter to send · Shift+Enter for new line</span></div><button id="send" class="send-btn" type="submit" aria-label="Send message">↑</button></div>
+        <div class="composer-bottom"><div class="composer-tools"><input id="fileInput" type="file" hidden accept=".txt,.md,.csv,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.xml,.log,.yaml,.yml,.sql,.m,.cpp,.c,.h,.java,.sh,.ps1,.pdf,.docx"><button type="button" id="attachBtn" class="tool-btn" title="Attach a text or code file">📎 <span>Attach file</span></button><select id="voiceLanguage" aria-label="Voice input language" title="Voice input language"><option value="ur-PK">Urdu</option><option value="en-US">English</option><option value="hi-IN">Hindi</option></select><button type="button" id="voiceBtn" class="tool-btn" title="Voice input">♩ <span>Voice</span></button><button type="button" id="speakToggle" class="tool-btn" title="Toggle spoken responses">◖ <span>Read aloud</span></button><span class="tool-hint">Enter to send · Shift+Enter for new line</span></div><button id="send" class="send-btn" type="submit" aria-label="Send message">↑</button></div>
       </form>
       <div class="disclaimer">Banana can make mistakes. Verify important information. <span>·</span> Your API key stays on the server.</div>
     </div>
@@ -81,7 +81,7 @@
 <div id="toast" class="toast" role="status"></div>
 <dialog id="memoryDialog" class="modal">
   <form method="dialog" class="modal-head"><div><span class="modal-icon">♧</span><h2>Personal memory</h2></div><button class="icon-btn" aria-label="Close">×</button></form>
-  <p class="modal-copy">Add context you want Banana to use in future replies on this browser. Avoid passwords or sensitive information.</p>
+  <p class="modal-copy">Add context you want Banana to use in future replies on your account across sessions. Avoid passwords or sensitive information.</p>
   <textarea id="memoryText" rows="5" placeholder="For example: I prefer simple explanations in Roman Urdu..."></textarea>
   <div class="modal-actions"><button id="clearMemory" class="quiet-btn" type="button">Clear memory</button><button id="saveMemory" class="primary-btn" type="button">Save memory</button></div>
 </dialog>
