@@ -293,5 +293,44 @@
     else promptInput.placeholder = "Ask Banana anything...";
     promptInput.focus();
   }));
+  const companionTokenKey = "banana.companionToken";
+  const computerDialog = $("computerDialog");
+  function setComputerStatus(message, isError = false) { $("computerStatus").textContent = message; $("computerStatus").classList.toggle("error-note", isError); }
+  async function checkComputerCompanion() {
+    try {
+      const response = await fetch("http://127.0.0.1:4317/health", { cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.ok) throw new Error("Unexpected response");
+      setComputerStatus("Connected. Safe actions: Notepad, Calculator, Paint, File Explorer, and websites.");
+      return true;
+    } catch { setComputerStatus("Companion not reachable. Start desktop-companion/start.bat on this Windows PC and keep its terminal open.", true); return false; }
+  }
+  async function runComputerAction(payload, label) {
+    const token = $("computerToken").value.trim();
+    if (!token) return setComputerStatus("Paste and save the local pairing token first.", true);
+    if (!await checkComputerCompanion()) return;
+    if (!confirm("Allow Banana AI to " + label + "?")) return;
+    try {
+      const response = await fetch("http://127.0.0.1:4317/action", { method: "POST", headers: { "Content-Type": "application/json", "X-Banana-Token": token }, body: JSON.stringify(payload), cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Action was rejected.");
+      setComputerStatus(data.message || "Action requested successfully.");
+    } catch (err) { setComputerStatus(err.message || "Could not contact the local companion.", true); }
+  }
+  $("computerBtn").addEventListener("click", async () => {
+    $("computerToken").value = localStorage.getItem(companionTokenKey) || "";
+    computerDialog.showModal();
+    await checkComputerCompanion();
+  });
+  $("closeComputer").addEventListener("click", () => computerDialog.close());
+  $("saveComputerToken").addEventListener("click", () => {
+    const token = $("computerToken").value.trim();
+    if (!token) { localStorage.removeItem(companionTokenKey); return setComputerStatus("Saved pairing token cleared."); }
+    localStorage.setItem(companionTokenKey, token); setComputerStatus("Pairing token saved in this browser. Keep it private.");
+  });
+  $("checkComputer").addEventListener("click", checkComputerCompanion);
+  $("openComputerApp").addEventListener("click", () => runComputerAction({ action: "open_app", app: $("computerApp").value }, "open " + $("computerApp").selectedOptions[0].text));
+  $("openComputerUrl").addEventListener("click", () => runComputerAction({ action: "open_url", url: $("computerUrl").value.trim() }, "open the website " + $("computerUrl").value.trim()));
+
   setupVoice(); initAuth();
 })();
