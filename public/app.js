@@ -416,25 +416,90 @@
   }
 
 
+  function playStartupSequence() {
+    // Original synthesized sci-fi boot sound. Called directly from the login gesture
+    // so browsers allow audio without requiring an extra sound-enable click.
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.linearRampToValueAtTime(0.34, now + 0.18);
+      master.gain.setValueAtTime(0.34, now + 2.45);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 3.65);
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass"; filter.frequency.setValueAtTime(950, now);
+      filter.frequency.exponentialRampToValueAtTime(5200, now + 1.1);
+      filter.frequency.exponentialRampToValueAtTime(1500, now + 3.5);
+      master.connect(filter); filter.connect(ctx.destination);
+
+      // Deep rising reactor tone
+      const bass = ctx.createOscillator(), bassGain = ctx.createGain();
+      bass.type = "sawtooth";
+      bass.frequency.setValueAtTime(54, now);
+      bass.frequency.exponentialRampToValueAtTime(108, now + 1.15);
+      bass.frequency.exponentialRampToValueAtTime(72, now + 3.3);
+      bassGain.gain.setValueAtTime(0.0001, now);
+      bassGain.gain.exponentialRampToValueAtTime(0.24, now + 0.38);
+      bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.45);
+      bass.connect(bassGain); bassGain.connect(master);
+      bass.start(now); bass.stop(now + 3.5);
+
+      // Three bright activation sweeps
+      [392, 587.33, 880, 1174.66].forEach((frequency, index) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        const start = now + [0.32, 0.88, 1.52, 2.38][index];
+        osc.type = index === 0 ? "triangle" : "sine";
+        osc.frequency.setValueAtTime(frequency * 0.72, start);
+        osc.frequency.exponentialRampToValueAtTime(frequency, start + 0.22);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(index === 3 ? 0.42 : 0.27, start + 0.055);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + (index === 3 ? 0.72 : 0.5));
+        osc.connect(gain); gain.connect(master);
+        osc.start(start); osc.stop(start + (index === 3 ? 0.76 : 0.54));
+      });
+
+      // Soft energy pulses timed with the rings and the final activation flash
+      [0.12, 0.72, 1.34, 2.05, 2.78].forEach((offset, index) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        const start = now + offset;
+        osc.type = "sine"; osc.frequency.setValueAtTime(index === 4 ? 110 : 76, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(index === 4 ? 0.22 : 0.11, start + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + (index === 4 ? 0.34 : 0.19));
+        osc.connect(gain); gain.connect(master);
+        osc.start(start); osc.stop(start + (index === 4 ? 0.36 : 0.21));
+      });
+      window.setTimeout(() => { try { ctx.close(); } catch {} }, 4200);
+    } catch (error) {
+      // Audio is an enhancement; the visual boot sequence still works if unavailable.
+    }
+  }
+
   function welcomeUser(name) {
     const overlay = $("welcomeOverlay");
     const cleanName = String(name || "Janab").replace(/[<>]/g, "").slice(0, 80);
-    $("welcomeTitle").textContent = "Welcome, Janab " + cleanName;
-    $("welcomeSubtitle").textContent = "Banana AI aap ke liye tayyar hai.";
+    $("welcomeTitle").textContent = "SYSTEM ACTIVATED";
+    $("welcomeSubtitle").textContent = "Welcome " + cleanName + ". Your AI workspace is coming online.";
     overlay.hidden = false;
+    overlay.classList.remove("boot-complete");
     document.body.classList.add("welcoming");
-    const enter = () => {
+    const status = $("stageStatus");
+    if (status) status.textContent = "SYSTEM ACTIVATED · READY FOR YOUR COMMAND";
+    window.setTimeout(() => {
+      overlay.classList.add("boot-complete");
+      $("welcomeSubtitle").textContent = "All systems online. You can start chatting now.";
+    }, 2850);
+    window.setTimeout(() => {
       overlay.hidden = true;
+      overlay.classList.remove("boot-complete");
       document.body.classList.remove("welcoming");
-      $("welcomeContinue").removeEventListener("click", enter);
-      $("welcomeContinue").textContent = "Enter Banana AI ↗";
-    };
-    $("welcomeContinue").textContent = "Enter Banana AI ↗";
-    $("welcomeContinue").addEventListener("click", enter, { once: true });
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      speakJarvis("Welcome back, sir. All systems for gaming will be prepared in a few minutes. For now, feel free to grab a cup of coffee and have a good day. Welcome back, sir. As you wish, sir.", { rate: 0.9, pitch: 0.76 });
-    }
+      const prompt = $("prompt");
+      if (prompt) prompt.focus({ preventScroll: true });
+    }, 3900);
   }
 
   async function initAuth() {
@@ -464,7 +529,7 @@
     };
     $("authSwitch").addEventListener("click", () => setMode(mode === "login" ? "register" : "login"));
     authForm.addEventListener("submit", async e => {
-      e.preventDefault(); authSubmit.disabled = true; authError.textContent = "";
+      e.preventDefault(); playStartupSequence(); authSubmit.disabled = true; authError.textContent = "";
       const email = $("authEmail").value.trim();
       const password = $("authPassword").value;
       try {
