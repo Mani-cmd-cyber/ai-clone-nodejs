@@ -99,6 +99,27 @@
     const responseBody = addMessage("assistant", "Banana is thinking…", { loading: true });
     try {
       await persistMessage(userMessage);
+      const rememberMatch = content.match(/^(?:please\s+)?(?:remember|yaad\s+rakhna|yaad\s+rakh\s+lo)\s*[:,-]?\s*(.*)$/i);
+      if (rememberMatch) {
+        const fact = (rememberMatch[1] || "").trim();
+        let reply = "";
+        if (!fact) reply = "Tell me what you want me to remember. For example: Remember that I prefer simple Roman Urdu explanations.";
+        else if (/(password|passcode|api[ -]?key|access token|secret key|credit card|bank account|national id|cnic|one-time code)/i.test(fact)) reply = "I will not save passwords, keys, codes, or financial/identity secrets in memory. You can save a non-sensitive preference instead.";
+        else {
+          const saved = await api("/api/memory");
+          const current = String(saved.memory || "").trim();
+          const entry = "- " + fact;
+          const alreadySaved = current.toLowerCase().includes(fact.toLowerCase());
+          if (alreadySaved) reply = "That detail is already in your private account memory.";
+          else { const memory = (current ? current + "\\n" : "") + entry; await api("/api/memory", { method: "PUT", body: JSON.stringify({ memory: memory.slice(-2500) }) }); reply = "Saved to your private Banana AI memory: " + fact; }
+        }
+        responseBody.textContent = reply;
+        const assistantMessage = { role: "assistant", content: reply };
+        messages.push(assistantMessage); await persistMessage(assistantMessage);
+        if (readAloud) speakText(reply);
+        await refreshHistory();
+        return;
+      }
       if ($("agentSelect").value === "computer") {
         responseBody.textContent = "Checking the local computer companion…";
         const reply = await executeComputerPrompt(content);
