@@ -93,3 +93,11 @@ body.light .auth-card input{background:#f3f4fa;color:var(--text)}
 
 #voiceLanguage{max-width:78px;padding:6px 4px;font-size:10px}
 @media(max-width:760px){#voiceLanguage{max-width:68px;padding:6px 2px}}
+
+.computer-modal input,.computer-modal select{width:100%;background:#090c14;border:1px solid var(--border);border-radius:9px;padding:11px;color:var(--text);outline:none;font:12px Manrope;margin:5px 0 10px}
+.computer-modal input:focus,.computer-modal select:focus{border-color:#67e8f9a6}
+.computer-modal label{display:block;font-size:11px;color:#aeb6ca;margin-top:10px}
+.computer-action{width:100%;margin:0 0 12px;cursor:pointer}
+.computer-modal .modal-actions{gap:8px;flex-wrap:wrap}
+.computer-modal .modal-actions button{font-size:10px}
+@media(max-width:760px){.top-actions #computerBtn span{display:none}.computer-modal{max-width:calc(100% - 20px)}}
