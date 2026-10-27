@@ -117,7 +117,7 @@
       if (researchContext) apiMessages[apiMessages.length - 1] = { role: "user", content: (attachedFile ? apiMessages[apiMessages.length - 1].content : content) + researchContext };
       let finalReply = "";
       if ($("agentSelect").value === "council") {
-        const councilQuery = attachedFile ? content + "\n\nAttached file " + attachedFile.name + " (untrusted data):\n" + attachedFile.text : content;
+        const councilQuery = (attachedFile ? content + "\n\nAttached file " + attachedFile.name + " (untrusted data):\n" + attachedFile.text : content) + researchContext;
         const council = await api("/api/agents", { method: "POST", body: JSON.stringify({ query: councilQuery }) });
         const councilAgents = council.agents || [];
         finalReply = councilAgents.map(agent => "## " + agent.name + "\n" + agent.answer).join("\n\n");
@@ -136,7 +136,7 @@
     } catch (err) {
       responseBody.textContent = `Error: ${err.message}`;
       responseBody.classList.add("error-note");
-      messages.pop(); // Do not retain failed assistant placeholder.
+      // Keep the user message so they can retry or continue after an API error.
       toast(err.message);
     } finally {
       isSending = false; sendBtn.disabled = false; sendBtn.textContent = "↑"; promptInput.focus(); scrollBottom();
@@ -234,7 +234,8 @@
   function setupVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) { $("voiceBtn").addEventListener("click", () => toast("Voice input is not supported here. Try Chrome or Edge.")); return; }
-    recognition = new SpeechRecognition(); recognition.lang = "en-US"; recognition.interimResults = true; recognition.continuous = false;
+    recognition = new SpeechRecognition(); recognition.lang = $("voiceLanguage").value || "ur-PK"; recognition.interimResults = true; recognition.continuous = false;
+    $("voiceLanguage").addEventListener("change", () => { if (recognition) recognition.lang = $("voiceLanguage").value; toast("Voice language: " + $("voiceLanguage").selectedOptions[0].text); });
     recognition.onstart = () => { $("voiceBtn").classList.add("active"); $("voiceBtn").innerHTML = "● <span>Listening…</span>"; };
     recognition.onend = () => { $("voiceBtn").classList.remove("active"); $("voiceBtn").innerHTML = "♩ <span>Voice</span>"; };
     recognition.onerror = e => toast(e.error === "not-allowed" ? "Please allow microphone access." : "Voice input stopped: " + e.error);
@@ -248,17 +249,28 @@
   $("fileInput").addEventListener("change", async () => {
     const file = $("fileInput").files && $("fileInput").files[0];
     if (!file) return;
-    const allowed = /\.(txt|md|csv|json|js|ts|jsx|tsx|py|html|css|xml|log|yaml|yml|sql|m|cpp|c|h|java|sh|ps1)$/i;
-    if (!allowed.test(file.name)) { $("fileInput").value = ""; return toast("Please attach a text, document, data, or code file."); }
-    if (file.size > 180 * 1024) { $("fileInput").value = ""; return toast("File is too large. Maximum size is 180 KB."); }
+    const allowed = /\.(txt|md|csv|json|js|ts|jsx|tsx|py|html|css|xml|log|yaml|yml|sql|m|cpp|c|h|java|sh|ps1|pdf|docx)$/i;
+    if (!allowed.test(file.name)) { $("fileInput").value = ""; return toast("Attach a supported text, code, PDF, or DOCX file."); }
+    if (file.size > 1024 * 1024) { $("fileInput").value = ""; return toast("File is too large. Maximum size is 1 MB."); }
     try {
-      const text = await file.text();
-      if (!text.trim()) return toast("That file appears to be empty.");
-      pendingFile = { name: file.name, text: text.slice(0, 140000) };
+      let text = "";
+      if (/\.(pdf|docx)$/i.test(file.name)) {
+        toast("Extracting document text…");
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        const extracted = await api("/api/files/extract", { method: "POST", body: JSON.stringify({ name: file.name, data: btoa(binary) }) });
+        text = extracted.text || "";
+      } else {
+        text = await file.text();
+      }
+      if (!text.trim()) return toast("That file appears to be empty or unreadable.");
+      pendingFile = { name: file.name, text: text.slice(0, 50000) };
       $("attachmentName").textContent = "Attached: " + file.name;
       $("attachmentChip").hidden = false;
       toast("File ready to send with your next message");
-    } catch { toast("Could not read this file."); }
+    } catch (err) { toast(err.message || "Could not read this file."); }
+    finally { $("fileInput").value = ""; }
   });
   $("removeAttachment").addEventListener("click", () => {
     pendingFile = null; $("fileInput").value = ""; $("attachmentChip").hidden = true; $("attachmentName").textContent = "";
