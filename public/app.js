@@ -169,7 +169,7 @@
       speakJarvis("Okay, sir. I will do this.", { rate: 0.9, pitch: 0.76 });
     }
     $("worldMonitor").hidden = true; messagesEl.hidden = false;
-    isSending = true; document.body.classList.add("ai-thinking"); syncCoreAudio(); sendBtn.disabled = true; sendBtn.textContent = "…";
+    isSending = true; playBeep("tap"); document.body.classList.add("ai-thinking"); syncCoreAudio(); sendBtn.disabled = true; sendBtn.textContent = "…";
     const attachedFile = pendingFile;
     const displayContent = content + (attachedFile ? "\n\n📎 Attached: " + attachedFile.name : "");
     const userMessage = { role: "user", content: displayContent };
@@ -195,7 +195,7 @@
         responseBody.textContent = reply;
         const assistantMessage = { role: "assistant", content: reply };
         messages.push(assistantMessage); await persistMessage(assistantMessage);
-        playCompletionChime();
+        playBeep("ready"); playCompletionChime();
         if (readAloud) speakText(reply);
         await refreshHistory();
         return;
@@ -206,7 +206,7 @@
         responseBody.textContent = reply;
         const assistantMessage = { role: "assistant", content: reply };
         messages.push(assistantMessage); await persistMessage(assistantMessage);
-        playCompletionChime();
+        playBeep("ready"); playCompletionChime();
         if (readAloud) speakText(reply);
         await refreshHistory();
         return;
@@ -289,7 +289,7 @@
       }
       const assistantMessage = { role: "assistant", content: finalReply };
       messages.push(assistantMessage); await persistMessage(assistantMessage);
-      playCompletionChime();
+      playBeep("ready"); playCompletionChime();
       if (readAloud) speakText(finalReply);
       await refreshHistory();
     } catch (err) {
@@ -325,6 +325,29 @@
     window.speechSynthesis.cancel();
     speakJarvis(text, { rate: 0.96, pitch: 0.82 });
   }
+  function playBeep(kind = "tap") {
+    // Short original JARVIS-style confirmation beep, synthesized locally.
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = coreAudio?.ctx || new AudioContextClass();
+      const ownsContext = !coreAudio?.ctx;
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(kind === "ready" ? 1046.5 : 740, ctx.currentTime);
+      if (kind === "ready") osc.frequency.exponentialRampToValueAtTime(1318.5, ctx.currentTime + 0.09);
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (kind === "ready" ? 0.15 : 0.075));
+      osc.connect(gain);
+      gain.connect(coreAudio?.ctx ? coreAudio.ctx.destination : ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + (kind === "ready" ? 0.16 : 0.085));
+      if (ownsContext) setTimeout(() => { try { ctx.close(); } catch {} }, 300);
+    } catch {}
+  }
+
   function playCompletionChime() {
     // A short original two-note completion cue; it plays over, never replaces, the ambient pulse.
     try {
