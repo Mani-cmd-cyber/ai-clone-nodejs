@@ -14,7 +14,7 @@ const MODEL = process.env.AI_MODEL || "openrouter/free";
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 app.disable("x-powered-by");
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public"), { extensions: ["html"] }));
 
 app.use("/api", (req, res, next) => {
@@ -286,6 +286,32 @@ app.post("/api/conversations/:id/messages", requireUser, async (req, res) => {
 });
 
 
+
+app.post("/api/files/extract", requireUser, async (req, res) => {
+  const name = safeText(req.body?.name, 180);
+  const base64 = typeof req.body?.data === "string" ? req.body.data : "";
+  const extension = path.extname(name).toLowerCase();
+  if (![".pdf", ".docx"].includes(extension)) return res.status(400).json({ error: "Only PDF and DOCX document extraction is supported." });
+  if (!base64 || base64.length > 1_500_000) return res.status(413).json({ error: "Document is empty or too large. Maximum file size is 1 MB." });
+  const buffer = Buffer.from(base64, "base64");
+  if (!buffer.length || buffer.length > 1_048_576) return res.status(413).json({ error: "Maximum document size is 1 MB." });
+  try {
+    let extracted = "";
+    if (extension === ".pdf") {
+      const parsed = await require("pdf-parse")(buffer);
+      extracted = parsed.text || "";
+    } else {
+      const result = await require("mammoth").extractRawText({ buffer });
+      extracted = result.value || "";
+    }
+    extracted = extracted.replace(/\u0000/g, "").trim().slice(0, 50000);
+    if (!extracted) return res.status(422).json({ error: "No readable text was found. Scanned-image PDFs need OCR and are not supported yet." });
+    res.json({ name, text: extracted, characters: extracted.length });
+  } catch (error) {
+    console.error("Document extraction error:", error.message);
+    res.status(422).json({ error: "Could not read this document. Check that the PDF or DOCX file is valid." });
+  }
+});
 app.post("/api/research", requireUser, async (req, res) => {
   const query = safeText(req.body?.query, 500);
   if (!query) return res.status(400).json({ error: "Research query is required." });
