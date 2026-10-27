@@ -14,7 +14,7 @@
   }
 
   let recognition = null, pendingFile = null;
-  // Soft synthesized sci-fi ambience: generated locally, no audio file or network request.
+  // Original soft sci-fi machine-core ambience, synthesized locally (no movie audio or external file).
   let coreAudio = null, coreSoundOn = false;
   function createCoreAudio() {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -23,32 +23,43 @@
     const ctx = new AudioContextClass();
     const master = ctx.createGain();
     const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass"; filter.frequency.value = 420; filter.Q.value = 0.7;
+    filter.type = "lowpass"; filter.frequency.value = 560; filter.Q.value = 0.8;
     master.gain.value = 0;
     filter.connect(master); master.connect(ctx.destination);
+
+    // Low continuous hum with gently detuned harmonics.
     const droneA = ctx.createOscillator(), droneB = ctx.createOscillator(), shimmer = ctx.createOscillator();
     const gainA = ctx.createGain(), gainB = ctx.createGain(), gainC = ctx.createGain();
     droneA.type = "sine"; droneA.frequency.value = 55;
     droneB.type = "sine"; droneB.frequency.value = 82.41; droneB.detune.value = -5;
     shimmer.type = "sine"; shimmer.frequency.value = 164.81;
-    gainA.gain.value = 0.58; gainB.gain.value = 0.22; gainC.gain.value = 0.035;
+    gainA.gain.value = 0.48; gainB.gain.value = 0.24; gainC.gain.value = 0.055;
     droneA.connect(gainA); droneB.connect(gainB); shimmer.connect(gainC);
     gainA.connect(filter); gainB.connect(filter); gainC.connect(filter);
+
+    // Soft repeating "tun-tun" pulse, like a fictional machine powering a core.
+    const pulse = ctx.createOscillator(), pulseGain = ctx.createGain();
+    const pulseLfo = ctx.createOscillator(), pulseLfoGain = ctx.createGain();
+    pulse.type = "sine"; pulse.frequency.value = 110;
+    pulseGain.gain.value = 0.018;
+    pulseLfo.type = "sine"; pulseLfo.frequency.value = 0.72; pulseLfoGain.gain.value = 0.012;
+    pulseLfo.connect(pulseLfoGain); pulseLfoGain.connect(pulseGain.gain);
+    pulse.connect(pulseGain); pulseGain.connect(filter);
+
     const lfo = ctx.createOscillator(), lfoGain = ctx.createGain();
-    lfo.type = "sine"; lfo.frequency.value = 0.16; lfoGain.gain.value = 0.004;
+    lfo.type = "sine"; lfo.frequency.value = 0.16; lfoGain.gain.value = 0.003;
     lfo.connect(lfoGain); lfoGain.connect(master.gain);
-    droneA.start(); droneB.start(); shimmer.start(); lfo.start();
-    coreAudio = { ctx, master, droneA, droneB, shimmer, lfo };
+    droneA.start(); droneB.start(); shimmer.start(); pulse.start(); pulseLfo.start(); lfo.start();
+    coreAudio = { ctx, master, droneA, droneB, shimmer, pulse, pulseLfo, lfo };
     return true;
   }
   async function syncCoreAudio() {
     if (!coreAudio) return;
-    const shouldPlay = coreSoundOn && document.visibilityState === "visible" &&
-      document.body.classList.contains("authenticated") && !$("worldMonitor").hidden;
-    if (coreSoundOn && document.visibilityState === "visible" &&
-        document.body.classList.contains("authenticated") && $("worldMonitor").hidden) {
+    const activeChat = coreSoundOn && document.visibilityState === "visible" &&
+      document.body.classList.contains("authenticated") && $("worldMonitor").hidden;
+    if (activeChat) {
       try { await coreAudio.ctx.resume(); } catch {}
-      const target = document.body.classList.contains("ai-thinking") ? 0.018 : 0.009;
+      const target = document.body.classList.contains("ai-thinking") ? 0.035 : 0.024;
       coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
     } else {
       if (coreAudio.ctx.state === "running") coreAudio.master.gain.setTargetAtTime(0, coreAudio.ctx.currentTime, 0.25);
