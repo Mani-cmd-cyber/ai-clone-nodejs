@@ -4,7 +4,65 @@
   const welcome = $("welcome"), sendBtn = $("send"), historyList = $("historyList");
   let messages = [], currentId = null, isSending = false, readAloud = false;
   const memoryKey = "banana.userMemory", themeKey = "banana.theme";
+
   let recognition = null, pendingFile = null;
+  // Soft synthesized sci-fi ambience: generated locally, no audio file or network request.
+  let coreAudio = null, coreSoundOn = false;
+  function createCoreAudio() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) { toast("Ambient audio is not supported in this browser."); return false; }
+    if (coreAudio) return true;
+    const ctx = new AudioContextClass();
+    const master = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass"; filter.frequency.value = 420; filter.Q.value = 0.7;
+    master.gain.value = 0;
+    filter.connect(master); master.connect(ctx.destination);
+    const droneA = ctx.createOscillator(), droneB = ctx.createOscillator(), shimmer = ctx.createOscillator();
+    const gainA = ctx.createGain(), gainB = ctx.createGain(), gainC = ctx.createGain();
+    droneA.type = "sine"; droneA.frequency.value = 55;
+    droneB.type = "sine"; droneB.frequency.value = 82.41; droneB.detune.value = -5;
+    shimmer.type = "sine"; shimmer.frequency.value = 164.81;
+    gainA.gain.value = 0.58; gainB.gain.value = 0.22; gainC.gain.value = 0.035;
+    droneA.connect(gainA); droneB.connect(gainB); shimmer.connect(gainC);
+    gainA.connect(filter); gainB.connect(filter); gainC.connect(filter);
+    const lfo = ctx.createOscillator(), lfoGain = ctx.createGain();
+    lfo.type = "sine"; lfo.frequency.value = 0.16; lfoGain.gain.value = 0.004;
+    lfo.connect(lfoGain); lfoGain.connect(master.gain);
+    droneA.start(); droneB.start(); shimmer.start(); lfo.start();
+    coreAudio = { ctx, master, droneA, droneB, shimmer, lfo };
+    return true;
+  }
+  async function syncCoreAudio() {
+    if (!coreAudio) return;
+    const shouldPlay = coreSoundOn && document.visibilityState === "visible" &&
+      document.body.classList.contains("authenticated") && !$("worldMonitor").hidden;
+    if (coreSoundOn && document.visibilityState === "visible" &&
+        document.body.classList.contains("authenticated") && $("worldMonitor").hidden) {
+      try { await coreAudio.ctx.resume(); } catch {}
+      const target = document.body.classList.contains("ai-thinking") ? 0.018 : 0.009;
+      coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
+    } else {
+      if (coreAudio.ctx.state === "running") coreAudio.master.gain.setTargetAtTime(0, coreAudio.ctx.currentTime, 0.25);
+      if (!coreSoundOn || document.visibilityState !== "visible") {
+        try { await coreAudio.ctx.suspend(); } catch {}
+      }
+    }
+  }
+  function setCoreSound(enabled) {
+    coreSoundOn = enabled;
+    const button = $("ambienceBtn");
+    button.setAttribute("aria-pressed", String(enabled));
+    button.classList.toggle("active", enabled);
+    button.innerHTML = enabled ? '♫ <span>Core sound on</span>' : '♫ <span>Core sound off</span>';
+    button.title = enabled ? "Turn off JARVIS-style ambient sound" : "Turn on JARVIS-style ambient sound";
+    document.body.classList.toggle("core-sound-enabled", enabled);
+    if (enabled && !createCoreAudio()) { coreSoundOn = false; button.setAttribute("aria-pressed", "false"); button.classList.remove("active"); button.innerHTML = '♫ <span>Core sound off</span>'; return; }
+    syncCoreAudio();
+    if (enabled) toast("JARVIS core ambience enabled");
+  }
+  $("ambienceBtn").addEventListener("click", () => setCoreSound(!coreSoundOn));
+  document.addEventListener("visibilitychange", syncCoreAudio);
 
   function toast(text) {
     const el = $("toast"); el.textContent = text; el.classList.add("show");
@@ -90,7 +148,7 @@
   async function sendMessage(raw) {
     const content = raw.trim(); if ((!content && !pendingFile) || isSending) return;
     $("worldMonitor").hidden = true; messagesEl.hidden = false;
-    isSending = true; sendBtn.disabled = true; sendBtn.textContent = "…";
+    isSending = true; document.body.classList.add("ai-thinking"); syncCoreAudio(); sendBtn.disabled = true; sendBtn.textContent = "…";
     const attachedFile = pendingFile;
     const displayContent = content + (attachedFile ? "\n\n📎 Attached: " + attachedFile.name : "");
     const userMessage = { role: "user", content: displayContent };
@@ -216,7 +274,7 @@
       // Keep the user message so they can retry or continue after an API error.
       toast(err.message);
     } finally {
-      isSending = false; sendBtn.disabled = false; sendBtn.textContent = "↑"; promptInput.focus(); scrollBottom();
+      isSending = false; document.body.classList.remove("ai-thinking"); syncCoreAudio(); sendBtn.disabled = false; sendBtn.textContent = "↑"; promptInput.focus(); scrollBottom();
     }
   }
   function renderResearch(results) {
@@ -367,7 +425,7 @@
     const mode = btn.dataset.mode, research = mode === "research", world = mode === "world";
     $("topMode").textContent = world ? "World Monitor" : research ? "Web Research" : "AI Assistant";
     $("researchToggle").checked = research; $("sidebar").classList.remove("open");
-    $("worldMonitor").hidden = !world; $("assistantStage").hidden = world; messagesEl.hidden = world;
+    $("worldMonitor").hidden = !world; $("assistantStage").hidden = world; messagesEl.hidden = world; syncCoreAudio();
     if (world) { welcome.hidden = true; promptInput.placeholder = "Ask Banana about the world, or use the dashboard above…"; $("agentSelect").value = "researcher"; $("researchToggle").checked = true; loadWorldMonitor(); }
     else { showWelcomeIfEmpty(); if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; } else { promptInput.placeholder = "Ask Banana anything..."; } }
     promptInput.focus();
