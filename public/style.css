@@ -147,3 +147,57 @@ body.light .auth-card input{background:#f3f4fa;color:var(--text)}
 @keyframes pinPulse{0%,100%{opacity:.65;scale:.85}50%{opacity:1;scale:1.15}}
 @media(max-width:760px){.world-monitor{padding:15px 0 25px}.world-header{gap:8px}.world-header h2{font-size:30px}.world-overview{grid-template-columns:1fr;padding:15px;gap:18px}.world-globe{width:210px}.world-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.world-stat{padding:10px 7px;min-height:84px}.world-stat small{font-size:7px}.world-stat strong{font-size:22px}.world-columns{grid-template-columns:1fr}.world-header .quiet-btn{white-space:nowrap;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.world-globe:before,.world-pin{animation:none!important}}
+
+
+/* JARVIS-inspired holographic chat console — preserves Banana's purple/cyan palette */
+.chat-area{position:relative;isolation:isolate}
+.assistant-stage{position:relative;display:grid;grid-template-columns:minmax(150px,235px) minmax(220px,1fr);align-items:center;gap:clamp(14px,3vw,42px);width:min(760px,100%);min-height:235px;margin:0 auto 4px;padding:10px 24px;overflow:hidden;border:1px solid #8e9bff19;border-radius:20px;background:radial-gradient(ellipse at 26% 50%,#29215a48,transparent 42%),linear-gradient(115deg,#0b1020cc,#0b0e18a8 72%);transition:min-height .45s ease,padding .45s ease,opacity .3s ease,border-color .3s ease}
+.assistant-stage:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 0%,#67e8f905 50%,transparent 100%);background-size:200% 100%;animation:stageScan 8s linear infinite}
+.stage-scanlines{position:absolute;inset:0;pointer-events:none;opacity:.18;background:repeating-linear-gradient(0deg,transparent 0 5px,#67e8f90b 6px,transparent 7px)}
+.stage-orb-system{position:relative;width:210px;height:205px;display:grid;place-items:center;perspective:850px;transform-style:preserve-3d}
+.stage-orb-halo{position:absolute;width:135px;height:135px;border-radius:50%;background:#8b5cf92c;filter:blur(24px);animation:stageHalo 3s ease-in-out infinite alternate}
+.stage-orb{position:relative;z-index:3;width:88px;height:88px;display:grid;place-items:center;border-radius:50%;font-size:39px;color:#09101e;background:radial-gradient(circle at 30% 22%,#fff 0%,#d9faff 7%,#a7b7ff 19%,#7c7fe6 42%,#20285c 69%,#080d20 82%);box-shadow:inset -10px -12px 24px #050819cc,inset 6px 5px 17px #ffffffa8,0 0 20px #8b5cf977,0 0 55px #67e8f944;transform-style:preserve-3d;animation:stageCore 4s ease-in-out infinite}
+.stage-orb-glass{position:absolute;inset:9px;border-radius:50%;border:1px solid #d9faff7a;box-shadow:inset 0 0 18px #67e8f977;transform:rotateX(28deg) rotateY(-28deg)}
+.stage-orb span{position:relative;text-shadow:0 0 13px #fff8}
+.stage-orbit{position:absolute;border:1px solid #bbaaff65;border-radius:50%;transform-style:preserve-3d;pointer-events:none}
+.stage-orbit-a{width:183px;height:62px;transform:rotateX(66deg) rotateZ(-22deg);animation:stageOrbit 7s linear infinite}
+.stage-orbit-b{width:155px;height:88px;border-color:#67e8f975;transform:rotateY(67deg) rotateZ(24deg);animation:stageOrbit 9s linear infinite reverse}
+.stage-orbit-c{width:205px;height:134px;border-color:#a78bfa25;transform:rotateX(53deg) rotateY(26deg);animation:stageOrbit 14s linear infinite}
+.stage-node{position:absolute;z-index:4;width:6px;height:6px;border-radius:50%;background:#a5f3fc;box-shadow:0 0 12px #67e8f9}
+.node-one{top:26px;right:35px}.node-two{bottom:34px;left:30px;background:#c4b5fd;box-shadow:0 0 12px #a78bfa}.node-three{top:64px;left:22px;width:4px;height:4px}
+.stage-orb-base{position:absolute;bottom:15px;width:86px;height:15px;border-radius:50%;background:#67e8f94a;filter:blur(13px)}
+.stage-info{position:relative;z-index:1;min-width:0}
+.stage-kicker{display:flex;align-items:center;gap:8px;font:9px 'DM Mono',monospace;letter-spacing:1.25px;color:#b9c5e6;white-space:nowrap}
+.stage-live-dot{width:6px;height:6px;flex-shrink:0;border-radius:50%;background:var(--cyan);box-shadow:0 0 11px var(--cyan);animation:stageBlink 2s ease-in-out infinite}
+.stage-code{margin-left:auto;color:#67e8f9a8;font-size:8px;letter-spacing:.4px}
+.stage-status{margin:16px 0 14px;font-size:clamp(15px,2vw,20px);font-weight:700;letter-spacing:-.4px;color:#f0efff}
+.stage-wave{display:flex;align-items:center;gap:4px;height:25px}
+.stage-wave i{display:block;width:3px;height:5px;border-radius:5px;background:linear-gradient(#c4b5fd,#67e8f9);opacity:.75;animation:stageWave 1.1s ease-in-out infinite}
+.stage-wave i:nth-child(3n){animation-delay:-.4s}.stage-wave i:nth-child(3n + 1){animation-delay:-.8s}.stage-wave i:nth-child(4n){animation-delay:-.2s}
+.stage-metrics{display:flex;gap:15px;margin-top:13px;font:8px 'DM Mono',monospace;letter-spacing:.7px;color:#7e8aa7}
+.stage-metrics b{color:#67e8f9;font-weight:500;margin-right:3px}
+.stage-corner{position:absolute;width:17px;height:17px;pointer-events:none;border-color:#67e8f955}
+.stage-corner-tl{top:9px;left:9px;border-top:1px solid;border-left:1px solid}.stage-corner-br{right:9px;bottom:9px;border-right:1px solid;border-bottom:1px solid}
+.assistant-stage.is-active{border-color:#67e8f94c;background:radial-gradient(ellipse at 26% 50%,#31286c6b,transparent 46%),linear-gradient(115deg,#0b1020ed,#0b0e18e8)}
+.assistant-stage.is-active .stage-orb{animation-duration:1.25s;box-shadow:inset -10px -12px 24px #050819cc,inset 6px 5px 17px #ffffffa8,0 0 28px #8b5cf9bb,0 0 75px #67e8f977}
+.assistant-stage.is-active .stage-live-dot{background:#69e6b1;box-shadow:0 0 13px #69e6b1}
+.assistant-stage.is-active .stage-wave i{animation-duration:.45s;opacity:1}
+.chat-area.has-messages .assistant-stage{grid-template-columns:90px minmax(0,1fr);min-height:92px;width:min(820px,100%);padding:0 17px;margin-bottom:16px;border-radius:14px}
+.chat-area.has-messages .stage-orb-system{width:82px;height:82px;transform:scale(.74)}
+.chat-area.has-messages .stage-orb{width:72px;height:72px;font-size:31px}
+.chat-area.has-messages .stage-orbit-a{width:105px;height:38px}.chat-area.has-messages .stage-orbit-b{width:93px;height:53px}.chat-area.has-messages .stage-orbit-c{width:119px;height:71px}
+.chat-area.has-messages .stage-orb-base{bottom:2px}
+.chat-area.has-messages .stage-status{font-size:13px;margin:7px 0 3px}
+.chat-area.has-messages .stage-wave{height:13px}
+.chat-area.has-messages .stage-metrics{display:none}
+.chat-area.has-messages .stage-code{display:none}
+@keyframes stageOrbit{from{rotate:0deg}to{rotate:360deg}}
+@keyframes stageCore{0%,100%{transform:translateY(0) rotateY(-8deg) rotateX(5deg) scale(1)}50%{transform:translateY(-7px) rotateY(9deg) rotateX(-5deg) scale(1.035)}}
+@keyframes stageHalo{from{opacity:.5;transform:scale(.8)}to{opacity:1;transform:scale(1.2)}}
+@keyframes stageWave{0%,100%{height:4px}50%{height:21px}}
+@keyframes stageBlink{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes stageScan{from{background-position:200% 0}to{background-position:-200% 0}}
+@media(max-width:760px){.assistant-stage{grid-template-columns:115px minmax(0,1fr);min-height:170px;padding:8px 10px;gap:4px;border-radius:15px}.stage-orb-system{width:125px;height:150px;transform:scale(.78)}.stage-orbit-a{width:132px;height:48px}.stage-orbit-b{width:115px;height:64px}.stage-orbit-c{width:142px;height:91px}.stage-orb{width:72px;height:72px;font-size:32px}.stage-kicker{font-size:7px;letter-spacing:.7px;gap:5px}.stage-code{display:none}.stage-status{font-size:14px;margin:10px 0}.stage-metrics{gap:7px;font-size:7px}.chat-area.has-messages .assistant-stage{grid-template-columns:72px minmax(0,1fr);min-height:76px;padding:0 8px;gap:3px}.chat-area.has-messages .stage-orb-system{transform:scale(.62)}.chat-area.has-messages .stage-kicker{font-size:7px}.chat-area.has-messages .stage-status{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.stage-orb,.stage-orbit,.stage-orb-halo,.stage-wave i,.stage-live-dot,.assistant-stage:before{animation:none!important}}
+body.light .assistant-stage{background:radial-gradient(ellipse at 26% 50%,#ddd4ff88,transparent 46%),linear-gradient(115deg,#f8f8ff,#edfaff);border-color:#8175b82b}
+body.light .stage-status{color:#20233b}body.light .stage-kicker{color:#4f5875}body.light .stage-metrics{color:#6c7390}
