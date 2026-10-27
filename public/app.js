@@ -332,5 +332,15 @@
   $("openComputerApp").addEventListener("click", () => runComputerAction({ action: "open_app", app: $("computerApp").value }, "open " + $("computerApp").selectedOptions[0].text));
   $("openComputerUrl").addEventListener("click", () => runComputerAction({ action: "open_url", url: $("computerUrl").value.trim() }, "open the website " + $("computerUrl").value.trim()));
 
+  async function refreshServiceStatus() {
+    const chip = $("modelChip");
+    try {
+      const status = await api("/api/health");
+      if (!status.providerConfigured) { chip.textContent = "API KEY NEEDED"; chip.title = "Add a valid AI_API_KEY in Vercel Environment Variables to enable AI replies."; chip.classList.add("status-warning"); }
+      else if (!status.persistentStorageConfigured || !status.sessionConfigured) { chip.textContent = "SETUP INCOMPLETE"; chip.title = "Private account storage or sessions are not configured."; chip.classList.add("status-warning"); }
+      else { chip.textContent = "HOSTED AI READY"; chip.title = "Hosted AI and private account storage are configured."; chip.classList.remove("status-warning"); }
+    } catch { chip.textContent = "STATUS UNKNOWN"; chip.title = "Could not check server status."; chip.classList.add("status-warning"); }
+  }
+  refreshServiceStatus();
   setupVoice(); initAuth();
 })();
