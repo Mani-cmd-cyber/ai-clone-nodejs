@@ -52,7 +52,7 @@ function sessionSignature(payload) {
 }
 function makeSession(user) {
   const payload = Buffer.from(JSON.stringify({
-    uid: user.id, email: user.email, exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+    uid: user.id, email: user.email, name: user.name || "", exp: Date.now() + 7 * 24 * 60 * 60 * 1000
   })).toString("base64url");
   return payload + "." + sessionSignature(payload);
 }
@@ -73,7 +73,7 @@ function readSession(req) {
   try {
     const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
     if (!session.uid || !session.email || session.exp < Date.now()) return null;
-    return { id: session.uid, email: session.email };
+    return { id: session.uid, email: session.email, name: session.name || "" };
   } catch { return null; }
 }
 function setSessionCookie(res, user) {
@@ -145,11 +145,12 @@ app.post("/api/auth/register", async (req, res) => {
     const pathname = userPath(email);
     const existing = await readJson(pathname);
     if (existing) return res.status(409).json({ error: "An account with this email already exists. Please log in." });
-    const user = { id: newId(), email, salt: crypto.randomBytes(16).toString("hex"), passwordHash: "", memory: "", createdAt: Date.now() };
+    const name = safeText(req.body?.name, 80);
+    const user = { id: newId(), name, email, salt: crypto.randomBytes(16).toString("hex"), passwordHash: "", memory: "", createdAt: Date.now() };
     user.passwordHash = passwordHash(password, user.salt);
     await writeJson(pathname, user);
     setSessionCookie(res, user);
-    return res.status(201).json({ user: { id: user.id, email: user.email } });
+    return res.status(201).json({ user: { id: user.id, email: user.email, name: user.name || "" } });
   } catch (error) { return serverError(res, "Register error", error); }
 });
 
@@ -161,14 +162,14 @@ app.post("/api/auth/login", async (req, res) => {
     const user = await readJson(userPath(email));
     if (!user || !verifyPassword(password, user)) return res.status(401).json({ error: "Email or password is incorrect." });
     setSessionCookie(res, user);
-    return res.json({ user: { id: user.id, email: user.email } });
+    return res.json({ user: { id: user.id, email: user.email, name: user.name || "" } });
   } catch (error) { return serverError(res, "Login error", error); }
 });
 
 app.get("/api/auth/me", (req, res) => {
   const user = readSession(req);
   if (!user) return res.status(401).json({ error: "Not logged in." });
-  res.json({ user });
+  res.json({ user: { ...user, name: user.name || "" } });
 });
 app.post("/api/auth/logout", (req, res) => { clearSessionCookie(res); res.json({ ok: true }); });
 
