@@ -23,7 +23,7 @@
     const ctx = new AudioContextClass();
     const master = ctx.createGain();
     const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass"; filter.frequency.value = 560; filter.Q.value = 0.8;
+    filter.type = "lowpass"; filter.frequency.value = 1400; filter.Q.value = 0.8;
     master.gain.value = 0;
     filter.connect(master); master.connect(ctx.destination);
 
@@ -41,13 +41,13 @@
     const pulse = ctx.createOscillator(), pulseGain = ctx.createGain();
     const pulseLfo = ctx.createOscillator(), pulseLfoGain = ctx.createGain();
     pulse.type = "sine"; pulse.frequency.value = 110;
-    pulseGain.gain.value = 0.018;
-    pulseLfo.type = "sine"; pulseLfo.frequency.value = 0.72; pulseLfoGain.gain.value = 0.012;
+    pulseGain.gain.value = 0.16;
+    pulseLfo.type = "sine"; pulseLfo.frequency.value = 0.72; pulseLfoGain.gain.value = 0.08;
     pulseLfo.connect(pulseLfoGain); pulseLfoGain.connect(pulseGain.gain);
     pulse.connect(pulseGain); pulseGain.connect(filter);
 
     const lfo = ctx.createOscillator(), lfoGain = ctx.createGain();
-    lfo.type = "sine"; lfo.frequency.value = 0.16; lfoGain.gain.value = 0.003;
+    lfo.type = "sine"; lfo.frequency.value = 0.16; lfoGain.gain.value = 0.015;
     lfo.connect(lfoGain); lfoGain.connect(master.gain);
     droneA.start(); droneB.start(); shimmer.start(); pulse.start(); pulseLfo.start(); lfo.start();
     coreAudio = { ctx, master, droneA, droneB, shimmer, pulse, pulseLfo, lfo };
@@ -55,11 +55,10 @@
   }
   async function syncCoreAudio() {
     if (!coreAudio) return;
-    const activeChat = coreSoundOn && document.visibilityState === "visible" &&
-      document.body.classList.contains("authenticated") && $("worldMonitor").hidden;
+    const activeChat = coreSoundOn && document.visibilityState === "visible";
     if (activeChat) {
       try { await coreAudio.ctx.resume(); } catch {}
-      const target = document.body.classList.contains("ai-thinking") ? 0.009 : 0.006;
+      const target = document.body.classList.contains("ai-thinking") ? 0.10 : 0.075;
       coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
     } else {
       if (coreAudio.ctx.state === "running") coreAudio.master.gain.setTargetAtTime(0, coreAudio.ctx.currentTime, 0.25);
@@ -80,7 +79,8 @@
     syncCoreAudio();
     if (enabled) toast("JARVIS core ambience enabled");
   }
-  $("ambienceBtn").addEventListener("click", () => setCoreSound(!coreSoundOn));
+  // One-way enable: once the user activates sound, this button never toggles it off.
+  $("ambienceBtn").addEventListener("click", () => { if (!coreSoundOn) setCoreSound(true); else syncCoreAudio(); });
   document.addEventListener("visibilitychange", syncCoreAudio);
 
   function toast(text) {
