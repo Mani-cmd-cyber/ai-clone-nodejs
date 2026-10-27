@@ -79,7 +79,7 @@
     } catch (e) { toast(e.message); }
   }
   function resetChat(focus = true) {
-    currentId = null; messages = []; messagesEl.replaceChildren(); showWelcomeIfEmpty(); promptInput.value = "";
+    currentId = null; messages = []; messagesEl.replaceChildren(); $("worldMonitor").hidden = true; messagesEl.hidden = false; showWelcomeIfEmpty(); promptInput.value = "";
     if (focus) promptInput.focus(); refreshHistory();
   }
   async function persistMessage(message) {
@@ -89,6 +89,7 @@
   }
   async function sendMessage(raw) {
     const content = raw.trim(); if ((!content && !pendingFile) || isSending) return;
+    $("worldMonitor").hidden = true; messagesEl.hidden = false;
     isSending = true; sendBtn.disabled = true; sendBtn.textContent = "…";
     const attachedFile = pendingFile;
     const displayContent = content + (attachedFile ? "\n\n📎 Attached: " + attachedFile.name : "");
@@ -297,12 +298,32 @@
   $("clearMemory").addEventListener("click", async () => { try { await api("/api/memory", { method: "PUT", body: JSON.stringify({ memory: "" }) }); $("memoryText").value = ""; $("memoryDialog").close(); toast("Your saved memory was cleared"); } catch (e) { toast(e.message); } });
   document.querySelectorAll(".nav-item").forEach(btn => btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-item").forEach(x => x.classList.remove("active")); btn.classList.add("active");
-    const research = btn.dataset.mode === "research"; $("topMode").textContent = research ? "Web Research" : "AI Assistant";
+    const mode = btn.dataset.mode, research = mode === "research", world = mode === "world";
+    $("topMode").textContent = world ? "World Monitor" : research ? "Web Research" : "AI Assistant";
     $("researchToggle").checked = research; $("sidebar").classList.remove("open");
-    if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; }
-    else promptInput.placeholder = "Ask Banana anything...";
+    $("worldMonitor").hidden = !world; messagesEl.hidden = world;
+    if (world) { welcome.hidden = true; promptInput.placeholder = "Ask Banana about the world, or use the dashboard above…"; loadWorldMonitor(); }
+    else { showWelcomeIfEmpty(); if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; } else { promptInput.placeholder = "Ask Banana anything..."; } }
     promptInput.focus();
   }));
+  function worldDate(value) { if (!value) return "Time unavailable"; const date = new Date(value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString(); }
+  function renderWorldMonitor(data) {
+    const earthquakes = Array.isArray(data.earthquakes) ? data.earthquakes : [];
+    const events = Array.isArray(data.events) ? data.events : [];
+    const headlines = Array.isArray(data.headlines) ? data.headlines : [];
+    const pins = earthquakes.map(q => { const x = Math.max(9, Math.min(91, 50 + (Number(q.longitude) || 0) / 180 * 40)); const y = Math.max(10, Math.min(90, 50 - (Number(q.latitude) || 0) / 90 * 40)); const mag = Number(q.magnitude) || 0; return `<span class="world-pin mag-${mag >= 5 ? "high" : mag >= 3 ? "mid" : "low"}" style="left:${x}%;top:${y}%" title="${escapeHtml(q.title)}"></span>`; }).join("");
+    const warning = data.warnings && data.warnings.length ? `<p class="world-warning">${escapeHtml(data.warnings.join(" "))}</p>` : "";
+    const quakeCards = earthquakes.length ? earthquakes.map(q => `<a class="world-item" href="${escapeHtml(q.url)}" target="_blank" rel="noopener noreferrer"><span class="world-magnitude">${(Number(q.magnitude) || 0).toFixed(1)}</span><span class="world-item-copy"><strong>${escapeHtml(q.place || q.title)}</strong><small>${escapeHtml(worldDate(q.time))}</small></span><span class="arrow">↗</span></a>`).join("") : `<p class="world-empty">No earthquake records returned.</p>`;
+    const eventCards = events.length ? events.map(e => `<a class="world-item" href="${escapeHtml(e.url || "https://eonet.gsfc.nasa.gov/")}" target="_blank" rel="noopener noreferrer"><span class="world-event-mark">◎</span><span class="world-item-copy"><strong>${escapeHtml(e.title)}</strong><small>${escapeHtml(e.category)} · ${escapeHtml(worldDate(e.date))}</small></span><span class="arrow">↗</span></a>`).join("") : `<p class="world-empty">No open events returned, or the source is unavailable.</p>`;
+    const newsCards = headlines.length ? headlines.map(n => `<a class="world-news" href="${escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(n.title)}</strong><small>${escapeHtml(n.source)} · ${escapeHtml(worldDate(n.date))}</small><p>${escapeHtml(n.snippet)}</p></a>`).join("") : `<p class="world-empty">Headlines are unavailable right now.</p>`;
+    return `<div class="world-updated">UPDATED ${escapeHtml(worldDate(data.updatedAt))} · SOURCES: USGS, NASA EONET, GDELT</div>${warning}<div class="world-overview"><div class="world-globe-wrap"><div class="world-globe" aria-label="Stylized globe with earthquake hotspots">${pins}</div><div class="world-globe-legend"><span><i class="low"></i> Minor</span><span><i class="mid"></i> Moderate</span><span><i class="high"></i> Strong</span></div></div><div class="world-stats"><div class="world-stat"><small>EARTHQUAKES · 24H</small><strong>${earthquakes.length}</strong><span>USGS live feed</span></div><div class="world-stat"><small>OPEN NATURAL EVENTS</small><strong>${events.length}</strong><span>NASA EONET</span></div><div class="world-stat"><small>GLOBAL HEADLINES</small><strong>${headlines.length}</strong><span>GDELT news index</span></div><p class="world-note">These are public-source snapshots, not emergency alerts. Follow official local authorities for urgent safety information.</p></div></div><div class="world-columns"><section class="world-section"><h3>Recent earthquakes</h3>${quakeCards}<p class="world-source">Source: <a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson" target="_blank" rel="noopener noreferrer">USGS</a></p></section><section class="world-section"><h3>Open natural events</h3>${eventCards}<p class="world-source">Source: <a href="https://eonet.gsfc.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA EONET</a></p></section></div><section class="world-section world-headlines"><h3>Global headlines</h3>${newsCards}<p class="world-source">Source: <a href="https://www.gdeltproject.org/" target="_blank" rel="noopener noreferrer">GDELT Project</a></p></section>`;
+  }
+  async function loadWorldMonitor() {
+    const content = $("worldContent"); content.innerHTML = `<p class="modal-copy">Loading public world data…</p>`;
+    try { const data = await api("/api/world-monitor"); content.innerHTML = renderWorldMonitor(data); }
+    catch (error) { content.innerHTML = `<p class="world-warning">${escapeHtml(error.message || "Could not load World Monitor.")}</p>`; }
+    const refresh = $("worldRefresh"); if (refresh) refresh.onclick = loadWorldMonitor;
+  }
   const companionTokenKey = "banana.companionToken";
   const computerDialog = $("computerDialog");
   function setComputerStatus(message, isError = false) { $("computerStatus").textContent = message; $("computerStatus").classList.toggle("error-note", isError); }
