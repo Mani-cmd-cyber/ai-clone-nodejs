@@ -53,6 +53,41 @@
     coreAudio = { ctx, master, droneA, droneB, shimmer, pulse, pulseLfo, lfo };
     return true;
   }
+  // Original JARVIS-inspired electronic background motif; synthesized locally, not copied audio.
+  let ambientBeepTimer = null;
+  function playAmbientBeep() {
+    if (!coreSoundOn || !coreAudio || coreAudio.ctx.state !== "running" || document.hidden) return;
+    try {
+      const ctx = coreAudio.ctx;
+      const notes = [
+        { at: 0, freq: 880, duration: 0.075 },
+        { at: 0.16, freq: 1174.66, duration: 0.07 },
+        { at: 0.34, freq: 987.77, duration: 0.09 }
+      ];
+      for (const note of notes) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(note.freq, ctx.currentTime + note.at);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime + note.at);
+        gain.gain.exponentialRampToValueAtTime(0.018, ctx.currentTime + note.at + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + note.at + note.duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + note.at);
+        osc.stop(ctx.currentTime + note.at + note.duration + 0.01);
+      }
+    } catch {}
+  }
+  function scheduleAmbientBeeps() {
+    if (ambientBeepTimer) clearTimeout(ambientBeepTimer);
+    const loop = () => {
+      if (!coreSoundOn) return;
+      playAmbientBeep();
+      ambientBeepTimer = setTimeout(loop, 5200);
+    };
+    ambientBeepTimer = setTimeout(loop, 1800);
+  }
   async function syncCoreAudio() {
     if (!coreAudio || !coreSoundOn) return;
     // Keep ambient core running while the site is open, including during tasks and results.
@@ -71,6 +106,7 @@
     document.body.classList.add("core-sound-enabled");
     if (!createCoreAudio()) return;
     syncCoreAudio();
+    scheduleAmbientBeeps();
   }
   // Try immediately on page load. Browsers may block autoplay until the visitor interacts once.
   coreSoundOn = true;
@@ -80,7 +116,7 @@
     document.addEventListener(eventName, unlockCoreAudio, { once: true, passive: true })
   );
   $("ambienceBtn").addEventListener("click", unlockCoreAudio);
-  document.addEventListener("visibilitychange", syncCoreAudio);
+  document.addEventListener("visibilitychange", () => { syncCoreAudio(); if (!document.hidden && coreSoundOn) playAmbientBeep(); });
 
   function toast(text) {
     const el = $("toast"); el.textContent = text; el.classList.add("show");
