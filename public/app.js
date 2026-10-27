@@ -174,7 +174,8 @@
       $("authHeading").textContent = mode === "login" ? "Welcome back" : "Create your account";
       $("authSubheading").textContent = mode === "login" ? "Log in to continue to your private workspace." : "Create an account and start using Banana AI instantly.";
       authSubmit.textContent = mode === "login" ? "Log in" : "Create account";
-      $("authNameField").hidden = mode !== "register";
+      $("authNameField").hidden = false;
+      $("authNameLabel").textContent = mode === "register" ? "Your name" : "Your name (for personalized welcome)";
       $("authName").required = mode === "register";
       $("authSwitch").textContent = mode === "login" ? "New here? Create an account" : "Already have an account? Log in";
       $("authPassword").autocomplete = mode === "login" ? "current-password" : "new-password";
