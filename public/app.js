@@ -137,6 +137,35 @@
     utterance.rate = 1; window.speechSynthesis.speak(utterance);
   }
 
+
+  function welcomeUser(name) {
+    const overlay = $("welcomeOverlay");
+    const cleanName = String(name || "Janab").replace(/[<>]/g, "").slice(0, 80);
+    $("welcomeTitle").textContent = "Welcome, Janab " + cleanName;
+    $("welcomeSubtitle").textContent = "Banana AI aap ke liye tayyar hai.";
+    overlay.hidden = false;
+    document.body.classList.add("welcoming");
+    const enter = () => {
+      overlay.hidden = true;
+      document.body.classList.remove("welcoming");
+      $("welcomeContinue").removeEventListener("click", enter);
+      $("welcomeContinue").textContent = "Enter Banana AI ↗";
+    };
+    $("welcomeContinue").textContent = "Enter Banana AI ↗";
+    $("welcomeContinue").addEventListener("click", enter, { once: true });
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance("Welcome, Janab " + cleanName + ". Banana AI aap ke liye hazir hai.");
+      utterance.rate = 0.92;
+      utterance.pitch = 0.88;
+      utterance.volume = 1;
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => /en-IN|ur-PK|hi-IN/i.test(v.lang)) || voices.find(v => /English/i.test(v.name));
+      if (preferred) utterance.voice = preferred;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
   async function initAuth() {
     const authForm = $("authForm"), authError = $("authError"), authSubmit = $("authSubmit");
     let mode = "login";
@@ -145,15 +174,20 @@
       $("authHeading").textContent = mode === "login" ? "Welcome back" : "Create your account";
       $("authSubheading").textContent = mode === "login" ? "Log in to continue to your private workspace." : "Create an account and start using Banana AI instantly.";
       authSubmit.textContent = mode === "login" ? "Log in" : "Create account";
+      $("authNameField").hidden = mode !== "register";
+      $("authName").required = mode === "register";
       $("authSwitch").textContent = mode === "login" ? "New here? Create an account" : "Already have an account? Log in";
       $("authPassword").autocomplete = mode === "login" ? "current-password" : "new-password";
       authError.textContent = "";
     };
     const showAuth = () => { document.body.classList.remove("authenticated"); $("authGate").hidden = false; };
-    const showApp = user => {
+    const showApp = (user, announce = false) => {
       document.body.classList.add("authenticated"); $("authGate").hidden = true;
       $("accountEmail").textContent = user.email || "";
+      const name = (user.name || (user.email || "Janab").split("@")[0].replace(/[._-]+/g, " ")).trim() || "Janab";
+      $("accountEmail").title = name;
       refreshHistory();
+      if (announce) welcomeUser(name);
     };
     $("authSwitch").addEventListener("click", () => setMode(mode === "login" ? "register" : "login"));
     authForm.addEventListener("submit", async e => {
@@ -161,10 +195,11 @@
       const email = $("authEmail").value.trim();
       const password = $("authPassword").value;
       try {
+        const name = $("authName").value.trim();
         const result = await api(mode === "login" ? "/api/auth/login" : "/api/auth/register", {
-          method: "POST", body: JSON.stringify({ email, password })
+          method: "POST", body: JSON.stringify({ email, password, name })
         });
-        showApp(result.user); authForm.reset(); toast(mode === "login" ? "Logged in successfully" : "Account created successfully");
+        showApp(result.user, true); authForm.reset(); toast(mode === "login" ? "Logged in successfully" : "Account created successfully");
       } catch (err) { authError.textContent = err.message; }
       finally { authSubmit.disabled = false; }
     });
@@ -172,7 +207,7 @@
       try { await api("/api/auth/logout", { method: "POST", body: "{}" }); }
       finally { resetChat(false); showAuth(); setMode("login"); toast("Logged out"); }
     });
-    try { const result = await api("/api/auth/me"); showApp(result.user); }
+    try { const result = await api("/api/auth/me"); showApp(result.user, false); }
     catch { showAuth(); }
   }
 
