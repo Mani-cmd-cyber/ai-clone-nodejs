@@ -5,6 +5,14 @@
   let messages = [], currentId = null, isSending = false, readAloud = false;
   const memoryKey = "banana.userMemory", themeKey = "banana.theme";
 
+  // Update the holographic core status and synchronize its thinking animation.
+  function setAssistantStage(message, thinking = false) {
+    const status = $("stageStatus");
+    if (status) status.textContent = String(message || "Ready when you are.");
+    document.body.classList.toggle("ai-thinking", Boolean(thinking));
+    if (typeof syncCoreAudio === "function") syncCoreAudio();
+  }
+
   let recognition = null, pendingFile = null;
   // Soft synthesized sci-fi ambience: generated locally, no audio file or network request.
   let coreAudio = null, coreSoundOn = false;
