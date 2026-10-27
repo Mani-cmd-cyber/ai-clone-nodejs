@@ -79,7 +79,7 @@
     } catch (e) { toast(e.message); }
   }
   function resetChat(focus = true) {
-    currentId = null; messages = []; messagesEl.replaceChildren(); $("worldMonitor").hidden = true; messagesEl.hidden = false; showWelcomeIfEmpty(); promptInput.value = "";
+    currentId = null; messages = []; messagesEl.replaceChildren(); $("chatArea").classList.remove("has-messages"); setAssistantStage("Core online · ready for your next question.", false); $("worldMonitor").hidden = true; $("assistantStage").hidden = false; messagesEl.hidden = false; showWelcomeIfEmpty(); promptInput.value = "";
     if (focus) promptInput.focus(); refreshHistory();
   }
   async function persistMessage(message) {
@@ -193,6 +193,7 @@
             let payload; try { payload = JSON.parse(dataLine.slice(5).trim()); } catch { continue; }
             if (eventLine?.includes("token")) {
               finalReply += payload.token || "";
+              if (finalReply.length < 8) setAssistantStage("Response stream connected…", true);
               responseBody.innerHTML = formatText(finalReply);
               scrollBottom();
             } else if (eventLine?.includes("error")) {
@@ -366,7 +367,7 @@
     const mode = btn.dataset.mode, research = mode === "research", world = mode === "world";
     $("topMode").textContent = world ? "World Monitor" : research ? "Web Research" : "AI Assistant";
     $("researchToggle").checked = research; $("sidebar").classList.remove("open");
-    $("worldMonitor").hidden = !world; messagesEl.hidden = world;
+    $("worldMonitor").hidden = !world; $("assistantStage").hidden = world; messagesEl.hidden = world;
     if (world) { welcome.hidden = true; promptInput.placeholder = "Ask Banana about the world, or use the dashboard above…"; $("agentSelect").value = "researcher"; $("researchToggle").checked = true; loadWorldMonitor(); }
     else { showWelcomeIfEmpty(); if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; } else { promptInput.placeholder = "Ask Banana anything..."; } }
     promptInput.focus();
