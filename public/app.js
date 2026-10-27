@@ -111,13 +111,22 @@
       responseBody.textContent = "Banana is thinking…";
       const apiMessages = [...messages.slice(-20)];
       if (researchContext) apiMessages[apiMessages.length - 1] = { role: "user", content: content + researchContext };
-      const result = await api("/api/chat", { method: "POST", body: JSON.stringify({
-        messages: apiMessages, agent: $("agentSelect").value
-      }) });
-      responseBody.innerHTML = formatText(result.reply);
-      const assistantMessage = { role: "assistant", content: result.reply };
+      let finalReply = "";
+      if ($("agentSelect").value === "council") {
+        const council = await api("/api/agents", { method: "POST", body: JSON.stringify({ query: content }) });
+        const councilAgents = council.agents || [];
+        finalReply = councilAgents.map(agent => "## " + agent.name + "\n" + agent.answer).join("\n\n");
+        responseBody.innerHTML = renderCouncil(councilAgents);
+      } else {
+        const result = await api("/api/chat", { method: "POST", body: JSON.stringify({
+          messages: apiMessages, agent: $("agentSelect").value
+        }) });
+        finalReply = result.reply;
+        responseBody.innerHTML = formatText(result.reply);
+      }
+      const assistantMessage = { role: "assistant", content: finalReply };
       messages.push(assistantMessage); await persistMessage(assistantMessage);
-      if (readAloud) speakText(result.reply);
+      if (readAloud) speakText(finalReply);
       await refreshHistory();
     } catch (err) {
       responseBody.textContent = `Error: ${err.message}`;
@@ -130,6 +139,10 @@
   }
   function renderResearch(results) {
     return `<div class="research-results"><h4>WEB SOURCES</h4>${results.map(r => `<div class="research-result"><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.title || r.url)}</a><p>${escapeHtml(r.content || "")}</p></div>`).join("")}</div>`;
+  }
+  
+  function renderCouncil(agents) {
+    return `<div class="research-results"><h4>✳ BANANA AI COUNCIL · ${agents.length} SPECIALISTS</h4>${agents.map(agent => `<section class="research-result"><strong>${escapeHtml(agent.name)}</strong><p>${formatText(agent.answer)}</p></section>`).join("")}</div>`;
   }
   function speakText(text) {
     if (!("speechSynthesis" in window)) return toast("Text-to-speech is not supported in this browser.");
