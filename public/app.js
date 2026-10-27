@@ -334,9 +334,9 @@
       $("authPassword").autocomplete = mode === "login" ? "current-password" : "new-password";
       authError.textContent = "";
     };
-    const showAuth = () => { document.body.classList.remove("authenticated"); $("authGate").hidden = false; };
+    const showAuth = () => { document.body.classList.remove("authenticated"); $("authGate").hidden = false; syncCoreAudio(); };
     const showApp = (user, announce = false) => {
-      document.body.classList.add("authenticated"); $("authGate").hidden = true;
+      document.body.classList.add("authenticated"); $("authGate").hidden = true; syncCoreAudio();
       $("accountEmail").textContent = user.email || "";
       const name = (user.name || (user.email || "Janab").split("@")[0].replace(/[._-]+/g, " ")).trim() || "Janab";
       $("accountEmail").title = name;
