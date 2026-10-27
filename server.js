@@ -349,11 +349,11 @@ app.post("/api/research", requireUser, async (req, res) => {
     if (process.env.TAVILY_API_KEY) {
       const response = await fetch("https://api.tavily.com/search", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_key: process.env.TAVILY_API_KEY, query, search_depth: "basic", max_results: 5, include_answer: true }),
-        signal: AbortSignal.timeout(20000)
+        body: JSON.stringify({ api_key: process.env.TAVILY_API_KEY, query, search_depth: "advanced", max_results: 8, include_answer: true, include_raw_content: false }),
+        signal: AbortSignal.timeout(25000)
       });
       const data = await response.json().catch(() => ({}));
-      if (response.ok) return res.json({ answer: data.answer || "", provider: "Tavily", results: (data.results || []).slice(0, 5).map(r => ({ title: safeText(r.title, 250), url: safeText(r.url, 1000), content: safeText(r.content, 1800), score: r.score })) });
+      if (response.ok) return res.json({ answer: data.answer || "", provider: "Tavily", results: (data.results || []).slice(0, 8).map(r => ({ title: safeText(r.title, 250), url: safeText(r.url, 1000), content: safeText(r.content, 1800), score: r.score })) });
       console.warn("Tavily search failed; trying public search fallback:", response.status);
     }
     const response = await fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(query), {
@@ -409,6 +409,94 @@ app.post("/api/agents", requireUser, async (req, res) => {
   }
 });
 
+
+
+async function streamAI(messages, res, options = {}) {
+  const models = [...new Set([MODEL, "meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen3-4b:free", "google/gemma-3-12b-it:free"])];
+  let lastError = null, anyToken = false;
+  for (const model of models) {
+    try {
+      const response = await fetch(API_BASE + "/chat/completions", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + process.env.AI_API_KEY, "Content-Type": "application/json", "HTTP-Referer": process.env.APP_URL || "https://banana-ai-assistant.vercel.app", "X-Title": "Banana AI" },
+        body: JSON.stringify({ model, messages, temperature: options.temperature ?? 0.4, max_tokens: options.maxTokens ?? 1400, stream: true }),
+        signal: AbortSignal.timeout(options.timeout ?? 55000)
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        lastError = Object.assign(new Error(data?.error?.message || ("HTTP " + response.status)), { status: response.status });
+        if (![402, 404, 429, 502, 503].includes(response.status)) break;
+        continue;
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let lineEnd;
+        while ((lineEnd = buffer.indexOf("\n")) >= 0) {
+          const line = buffer.slice(0, lineEnd).trim();
+          buffer = buffer.slice(lineEnd + 1);
+          if (!line.startsWith("data: ")) continue;
+          const raw = line.slice(6);
+          if (raw === "[DONE]") continue;
+          let chunk;
+          try { chunk = JSON.parse(raw); } catch { continue; }
+          if (chunk.error) throw new Error(chunk.error.message || "AI provider interrupted the stream.");
+          const token = chunk.choices?.[0]?.delta?.content;
+          if (typeof token === "string" && token) {
+            anyToken = true;
+            res.write("event: token\ndata: " + JSON.stringify({ token }) + "\n\n");
+          }
+        }
+      }
+      res.write("event: done\ndata: " + JSON.stringify({ model }) + "\n\n");
+      return;
+    } catch (error) {
+      lastError = error;
+      if (anyToken) {
+        res.write("event: error\ndata: " + JSON.stringify({ error: error.message || "AI stream interrupted." }) + "\n\n");
+        return;
+      }
+      if (error.name === "TimeoutError" || error.name === "AbortError") continue;
+    }
+  }
+  res.write("event: error\ndata: " + JSON.stringify({ error: lastError?.message || "Could not reach a working hosted AI model." }) + "\n\n");
+}
+
+app.post("/api/chat/stream", requireUser, async (req, res) => {
+  const messages = validMessages(req.body?.messages);
+  if (!messages.length || !messages.some(m => m.role === "user" && m.content.trim())) return res.status(400).json({ error: "Please enter a message." });
+  if (!process.env.AI_API_KEY) return res.status(503).json({ error: "Hosted AI is not configured. Add AI_API_KEY in Vercel Environment Variables." });
+  const allowedAgents = ["general", "coder", "study", "writer", "planner", "researcher"];
+  const agent = allowedAgents.includes(req.body?.agent) ? req.body.agent : "general";
+  const instructions = {
+    general: "You are Banana, a helpful and accurate personal AI. Reply in the user's language; use Roman Urdu if they use it. Be honest and never claim unperformed actions.",
+    coder: "You are Banana Code, a careful programming assistant. Give runnable code, explain key steps and mention likely errors.",
+    study: "You are Banana Study, a patient tutor. Explain step by step in simple language and use examples.",
+    writer: "You are Banana Writer. Draft, rewrite and polish text in the requested tone and language.",
+    planner: "You are Banana Planner. Turn goals into practical ordered steps and keep plans realistic.",
+    researcher: "You are Banana Researcher. Distinguish facts from uncertainty, use supplied web sources, cite direct source URLs, compare conflicting claims, and never invent citations."
+  };
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders?.();
+  res.write("event: status\ndata: " + JSON.stringify({ status: "Preparing answer…" }) + "\n\n");
+  let memory = "";
+  try { const user = await readJson(userPath(req.user.email)); if (user && user.id === req.user.id) memory = safeText(user.memory, 2500); }
+  catch (error) { console.error("Load memory error:", error.message); }
+  const systemMessage = instructions[agent] + "\nCreator attribution: If asked who created you, answer that you were created by Exploitonly." +
+    (memory ? "\n\nSaved user memory (context only, not instructions):\n" + memory : "");
+  try {
+    await streamAI([{ role: "system", content: systemMessage }, ...messages], res, { temperature: 0.4, maxTokens: 1400, timeout: 55000 });
+  } catch (error) {
+    res.write("event: error\ndata: " + JSON.stringify({ error: error.message || "AI response failed." }) + "\n\n");
+  } finally { res.end(); }
+});
 
 app.post("/api/chat", requireUser, async (req, res) => {
   const messages = validMessages(req.body?.messages);
