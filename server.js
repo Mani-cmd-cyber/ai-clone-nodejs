@@ -10,7 +10,7 @@ const PORT = Number(process.env.PORT || 3000);
 const IS_VERCEL = Boolean(process.env.VERCEL);
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 const API_BASE = (process.env.AI_BASE_URL || "https://openrouter.ai/api/v1").replace(/\/+$/, "");
-const MODEL = process.env.AI_MODEL || "openai/gpt-4o-mini";
+const MODEL = process.env.AI_MODEL || "openrouter/free";
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 app.disable("x-powered-by");
