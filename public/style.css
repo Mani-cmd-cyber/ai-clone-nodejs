@@ -289,3 +289,19 @@ body.light .composer{background:rgba(255,255,255,.96)}
  .welcome h1{letter-spacing:-1.5px}
 }
 @media(prefers-reduced-motion:reduce){.message,.suggestion,.send-btn,.tool-btn{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+
+/* JARVIS core ambience control + sound-reactive hologram */
+.ambience-btn{display:flex;align-items:center;gap:6px;border:1px solid rgba(103,232,249,.16);font-size:10px;white-space:nowrap}
+.ambience-btn.active{color:var(--cyan);border-color:#67e8f955;background:#67e8f90d;box-shadow:0 0 18px #67e8f911}
+.ambience-btn.active:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 9px var(--cyan);animation:core-pulse 1.7s ease-in-out infinite}
+.core-sound-enabled .stage-orb-halo{animation-duration:3.8s}
+.core-sound-enabled .stage-orbit-a{animation-duration:7s}
+.core-sound-enabled .stage-orbit-b{animation-duration:10s}
+.core-sound-enabled .stage-wave i{animation-duration:1.15s}
+.ai-thinking .stage-orb-halo{animation-duration:1.4s!important;filter:brightness(1.45)}
+.ai-thinking .stage-orbit{animation-duration:3s!important}
+.ai-thinking .stage-wave i{animation-duration:.38s!important}
+.ai-thinking .stage-orb{box-shadow:0 0 38px #a78bfa88,0 0 82px #67e8f944,inset 0 0 25px #ffffff55}
+@keyframes core-pulse{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+@media(max-width:760px){.ambience-btn{padding:7px 8px}.ambience-btn span{display:none}.ambience-btn.active:after{content:"ON";font:9px 'DM Mono',monospace}}
