@@ -55,14 +55,10 @@
   }
   async function syncCoreAudio() {
     if (!coreAudio || !coreSoundOn) return;
-    if (document.visibilityState === "visible") {
-      try { await coreAudio.ctx.resume(); } catch {}
-      const target = document.body.classList.contains("ai-thinking") ? 0.032 : 0.025;
-      coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
-    } else {
-      if (coreAudio.ctx.state === "running") coreAudio.master.gain.setTargetAtTime(0, coreAudio.ctx.currentTime, 0.25);
-      try { await coreAudio.ctx.suspend(); } catch {}
-    }
+    // Keep ambient core running while the site is open, including during tasks and results.
+    try { if (coreAudio.ctx.state !== "running") await coreAudio.ctx.resume(); } catch {}
+    const target = document.body.classList.contains("ai-thinking") ? 0.032 : 0.025;
+    coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
   }
   function setCoreSound(enabled) {
     // Sound is always enabled; this control is intentionally not an off switch.
@@ -169,6 +165,9 @@
   }
   async function sendMessage(raw) {
     const content = raw.trim(); if ((!content && !pendingFile) || isSending) return;
+    if (/\b(edit|change|update|fix|create|build|make|write|design|generate|prepare|implement|solve|do|run|deploy|add|remove|modify|improve|task|kaam|bana|banao|kar do|theek)\b/i.test(content)) {
+      speakJarvis("Okay, sir. I will do this.", { rate: 0.9, pitch: 0.76 });
+    }
     $("worldMonitor").hidden = true; messagesEl.hidden = false;
     isSending = true; document.body.classList.add("ai-thinking"); syncCoreAudio(); sendBtn.disabled = true; sendBtn.textContent = "…";
     const attachedFile = pendingFile;
@@ -196,6 +195,7 @@
         responseBody.textContent = reply;
         const assistantMessage = { role: "assistant", content: reply };
         messages.push(assistantMessage); await persistMessage(assistantMessage);
+        playCompletionChime();
         if (readAloud) speakText(reply);
         await refreshHistory();
         return;
@@ -206,6 +206,7 @@
         responseBody.textContent = reply;
         const assistantMessage = { role: "assistant", content: reply };
         messages.push(assistantMessage); await persistMessage(assistantMessage);
+        playCompletionChime();
         if (readAloud) speakText(reply);
         await refreshHistory();
         return;
@@ -288,6 +289,7 @@
       }
       const assistantMessage = { role: "assistant", content: finalReply };
       messages.push(assistantMessage); await persistMessage(assistantMessage);
+      playCompletionChime();
       if (readAloud) speakText(finalReply);
       await refreshHistory();
     } catch (err) {
@@ -306,10 +308,44 @@
   function renderCouncil(agents) {
     return `<div class="research-results"><h4>✳ BANANA AI COUNCIL · ${agents.length} SPECIALISTS</h4>${agents.map(agent => `<section class="research-result"><strong>${escapeHtml(agent.name)}</strong><p>${formatText(agent.answer)}</p></section>`).join("")}</div>`;
   }
+  function speakJarvis(text, options = {}) {
+    if (!("speechSynthesis" in window)) return;
+    const utterance = new SpeechSynthesisUtterance(String(text).slice(0, 5000));
+    utterance.rate = options.rate ?? 0.92;
+    utterance.pitch = options.pitch ?? 0.78;
+    utterance.volume = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => /en-US|en-GB|en-IN/i.test(v.lang) && /natural|online|english/i.test(v.name))
+      || voices.find(v => /^en/i.test(v.lang));
+    if (preferred) utterance.voice = preferred;
+    window.speechSynthesis.speak(utterance);
+  }
   function speakText(text) {
     if (!("speechSynthesis" in window)) return toast("Text-to-speech is not supported in this browser.");
-    window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text.slice(0, 5000));
-    utterance.rate = 1; window.speechSynthesis.speak(utterance);
+    window.speechSynthesis.cancel();
+    speakJarvis(text, { rate: 0.96, pitch: 0.82 });
+  }
+  function playCompletionChime() {
+    // A short original two-note completion cue; it plays over, never replaces, the ambient pulse.
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      const master = ctx.createGain();
+      master.gain.value = 0.12;
+      master.connect(ctx.destination);
+      [880, 1174.66].forEach((frequency, index) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = "sine"; osc.frequency.value = frequency;
+        const start = ctx.currentTime + index * 0.16;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.55, start + 0.025);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+        osc.connect(gain); gain.connect(master);
+        osc.start(start); osc.stop(start + 0.24);
+      });
+      setTimeout(() => { try { ctx.close(); } catch {} }, 900);
+    } catch {}
   }
 
 
@@ -330,14 +366,7 @@
     $("welcomeContinue").addEventListener("click", enter, { once: true });
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance("Welcome, Janab " + cleanName + ". Banana AI aap ke liye hazir hai.");
-      utterance.rate = 0.92;
-      utterance.pitch = 0.88;
-      utterance.volume = 1;
-      const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(v => /en-IN|ur-PK|hi-IN/i.test(v.lang)) || voices.find(v => /English/i.test(v.name));
-      if (preferred) utterance.voice = preferred;
-      window.speechSynthesis.speak(utterance);
+      speakJarvis("Welcome back, sir. All systems for gaming will be prepared in a few minutes. For now, feel free to grab a cup of coffee and have a good day. Welcome back, sir. As you wish, sir.", { rate: 0.9, pitch: 0.76 });
     }
   }
 
