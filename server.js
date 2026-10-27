@@ -406,23 +406,43 @@ app.post("/api/chat", async (req, res) => {
         data?.error?.message || "unknown"
       );
 
+      const providerMessage = cleanText(
+        data?.error?.message || data?.message || "",
+        240
+      );
+
       if (response.status === 401) {
         return res.status(502).json({
-          error:
-            "AI API key is invalid. Check AI_API_KEY in Vercel."
+          error: "OpenRouter rejected AI_API_KEY (401). Check that the key is valid and active."
+        });
+      }
+
+      if (response.status === 402) {
+        return res.status(502).json({
+          error: "OpenRouter account has insufficient credits or billing is required (402). Check OpenRouter credits."
+        });
+      }
+
+      if (response.status === 403) {
+        return res.status(502).json({
+          error: "OpenRouter denied this request (403). Check model access, provider restrictions, and key permissions."
+        });
+      }
+
+      if (response.status === 404) {
+        return res.status(502).json({
+          error: "The selected AI model or API endpoint was not found (404). Check AI_MODEL and AI_BASE_URL."
         });
       }
 
       if (response.status === 429) {
-        return res.status(429).json({
-          error:
-            "OpenRouter rate limit or credits reached. Check provider usage and credits."
+        return res.status(502).json({
+          error: "OpenRouter rate limit reached or credits exhausted (429). Check provider limits and credits."
         });
       }
 
       return res.status(502).json({
-        error:
-          "AI provider returned an error. Check AI_MODEL, AI_BASE_URL, and model availability."
+        error: `AI provider error (HTTP ${response.status}). ${providerMessage || "Check AI_MODEL, AI_BASE_URL, model access, and OpenRouter credits."}`
       });
     }
 
