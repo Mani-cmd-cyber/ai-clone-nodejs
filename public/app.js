@@ -112,7 +112,7 @@
       const apiMessages = [...messages.slice(-20)];
       if (researchContext) apiMessages[apiMessages.length - 1] = { role: "user", content: content + researchContext };
       const result = await api("/api/chat", { method: "POST", body: JSON.stringify({
-        messages: apiMessages, agent: $("agentSelect").value, memory: localStorage.getItem(memoryKey) || ""
+        messages: apiMessages, agent: $("agentSelect").value
       }) });
       responseBody.innerHTML = formatText(result.reply);
       const assistantMessage = { role: "assistant", content: result.reply };
@@ -136,6 +136,46 @@
     window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text.slice(0, 5000));
     utterance.rate = 1; window.speechSynthesis.speak(utterance);
   }
+
+  async function initAuth() {
+    const authForm = $("authForm"), authError = $("authError"), authSubmit = $("authSubmit");
+    let mode = "login";
+    const setMode = next => {
+      mode = next;
+      $("authHeading").textContent = mode === "login" ? "Welcome back" : "Create your account";
+      $("authSubheading").textContent = mode === "login" ? "Log in to continue to your private workspace." : "Create an account and start using Banana AI instantly.";
+      authSubmit.textContent = mode === "login" ? "Log in" : "Create account";
+      $("authSwitch").textContent = mode === "login" ? "New here? Create an account" : "Already have an account? Log in";
+      $("authPassword").autocomplete = mode === "login" ? "current-password" : "new-password";
+      authError.textContent = "";
+    };
+    const showAuth = () => { document.body.classList.remove("authenticated"); $("authGate").hidden = false; };
+    const showApp = user => {
+      document.body.classList.add("authenticated"); $("authGate").hidden = true;
+      $("accountEmail").textContent = user.email || "";
+      refreshHistory();
+    };
+    $("authSwitch").addEventListener("click", () => setMode(mode === "login" ? "register" : "login"));
+    authForm.addEventListener("submit", async e => {
+      e.preventDefault(); authSubmit.disabled = true; authError.textContent = "";
+      const email = $("authEmail").value.trim();
+      const password = $("authPassword").value;
+      try {
+        const result = await api(mode === "login" ? "/api/auth/login" : "/api/auth/register", {
+          method: "POST", body: JSON.stringify({ email, password })
+        });
+        showApp(result.user); authForm.reset(); toast(mode === "login" ? "Logged in successfully" : "Account created successfully");
+      } catch (err) { authError.textContent = err.message; }
+      finally { authSubmit.disabled = false; }
+    });
+    $("logoutBtn").addEventListener("click", async () => {
+      try { await api("/api/auth/logout", { method: "POST", body: "{}" }); }
+      finally { resetChat(false); showAuth(); setMode("login"); toast("Logged out"); }
+    });
+    try { const result = await api("/api/auth/me"); showApp(result.user); }
+    catch { showAuth(); }
+  }
+
   function setupVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) { $("voiceBtn").addEventListener("click", () => toast("Voice input is not supported here. Try Chrome or Edge.")); return; }
@@ -156,9 +196,9 @@
   $("speakToggle").addEventListener("click", () => { readAloud = !readAloud; $("speakToggle").classList.toggle("active", readAloud); toast(readAloud ? "Read aloud enabled for replies" : "Read aloud disabled"); });
   $("themeBtn").addEventListener("click", () => { document.body.classList.toggle("light"); localStorage.setItem(themeKey, document.body.classList.contains("light") ? "light" : "dark"); });
   if (localStorage.getItem(themeKey) === "light") document.body.classList.add("light");
-  $("memoryBtn").addEventListener("click", () => { $("memoryText").value = localStorage.getItem(memoryKey) || ""; $("memoryDialog").showModal(); });
-  $("saveMemory").addEventListener("click", () => { localStorage.setItem(memoryKey, $("memoryText").value.trim().slice(0, 2500)); $("memoryDialog").close(); toast("Memory saved in this browser"); });
-  $("clearMemory").addEventListener("click", () => { localStorage.removeItem(memoryKey); $("memoryText").value = ""; $("memoryDialog").close(); toast("Memory cleared from this browser"); });
+  $("memoryBtn").addEventListener("click", async () => { try { const result = await api("/api/memory"); $("memoryText").value = result.memory || ""; $("memoryDialog").showModal(); } catch (e) { toast(e.message); } });
+  $("saveMemory").addEventListener("click", async () => { try { await api("/api/memory", { method: "PUT", body: JSON.stringify({ memory: $("memoryText").value.trim().slice(0, 2500) }) }); $("memoryDialog").close(); toast("Your memory is saved to your account"); } catch (e) { toast(e.message); } });
+  $("clearMemory").addEventListener("click", async () => { try { await api("/api/memory", { method: "PUT", body: JSON.stringify({ memory: "" }) }); $("memoryText").value = ""; $("memoryDialog").close(); toast("Your saved memory was cleared"); } catch (e) { toast(e.message); } });
   document.querySelectorAll(".nav-item").forEach(btn => btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-item").forEach(x => x.classList.remove("active")); btn.classList.add("active");
     const research = btn.dataset.mode === "research"; $("topMode").textContent = research ? "Web Research" : "AI Assistant";
@@ -167,5 +207,5 @@
     else promptInput.placeholder = "Ask Banana anything...";
     promptInput.focus();
   }));
-  setupVoice(); refreshHistory();
+  setupVoice(); initAuth();
 })();
