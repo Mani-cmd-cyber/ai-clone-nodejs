@@ -54,3 +54,8 @@ Create a Tavily key, then add `TAVILY_API_KEY=your_key` to `.env` and restart th
 - AI Council runs three specialist prompts concurrently through the configured hosted provider; provider availability and rate limits apply.
 - The website cannot directly control a visitor's Windows desktop. That requires a separately installed local companion, an explicit action allowlist and visible confirmation. The web app does not execute arbitrary shell commands.
 - Do not store passwords, API keys, or highly sensitive personal data in memory.
+
+
+## Optional Windows computer companion
+
+A separate, permission-based helper is in `desktop-companion/`. It only opens Notepad, Calculator, Paint, File Explorer, or HTTP/HTTPS links; it does not execute arbitrary shell commands. On Windows, double-click `desktop-companion/start.bat`, copy the printed pairing token into the Banana AI Computer panel, and keep the terminal running. The local helper binds only to `127.0.0.1`. The browser confirms each action before it is sent. This feature requires the companion to be installed and running on the same PC; it cannot be enabled by a hosted deployment alone.
