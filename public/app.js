@@ -231,7 +231,7 @@
         messages.push(assistantMessage); await persistMessage(assistantMessage);
         playBeep("ready"); playCompletionChime();
         announceMachine("Result is ready.");
-        if (readAloud) speakText(reply);
+        if (readAloud) speakText(reply, true);
         await refreshHistory();
         return;
       }
@@ -243,7 +243,7 @@
         messages.push(assistantMessage); await persistMessage(assistantMessage);
         playBeep("ready"); playCompletionChime();
         announceMachine("Result is ready.");
-        if (readAloud) speakText(reply);
+        if (readAloud) speakText(reply, true);
         await refreshHistory();
         return;
       }
@@ -328,7 +328,7 @@
       messages.push(assistantMessage); await persistMessage(assistantMessage);
       playBeep("ready"); playCompletionChime();
       announceMachine("Result is ready.");
-      if (readAloud) speakText(finalReply);
+      if (readAloud) speakText(finalReply, true);
       await refreshHistory();
     } catch (err) {
       responseBody.textContent = `Error: ${err.message}`;
@@ -364,10 +364,10 @@
     // Keep status announcements in a queue so they don't cut each other off.
     speakJarvis(text, { rate: 0.91, pitch: 0.76, volume: 0.72 });
   }
-  function speakText(text) {
+  function speakText(text, queue = false) {
     if (!("speechSynthesis" in window)) return toast("Text-to-speech is not supported in this browser.");
-    window.speechSynthesis.cancel();
-    speakJarvis(text, { rate: 0.96, pitch: 0.82 });
+    if (!queue) window.speechSynthesis.cancel();
+    speakJarvis(text, { rate: 0.96, pitch: 0.82, volume: 0.78 });
   }
   function playBeep(kind = "tap") {
     // Short original JARVIS-style confirmation beep, synthesized locally.
