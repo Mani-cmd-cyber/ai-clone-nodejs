@@ -8,6 +8,24 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+<div id="authGate" class="auth-gate">
+  <section class="auth-card" aria-labelledby="authHeading">
+    <a class="brand auth-brand" href="/" aria-label="Banana AI home"><span class="brand-mark">✳</span><span>banana<span class="brand-ai">.ai</span></span></a>
+    <div class="auth-eyebrow">YOUR PRIVATE AI WORKSPACE</div>
+    <h1 id="authHeading">Welcome back</h1>
+    <p id="authSubheading">Log in to continue to your private workspace.</p>
+    <form id="authForm">
+      <label for="authEmail">Email address</label>
+      <input id="authEmail" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required>
+      <label for="authPassword">Password</label>
+      <input id="authPassword" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required>
+      <p id="authError" class="auth-error" role="alert"></p>
+      <button id="authSubmit" class="primary-btn auth-submit" type="submit">Log in</button>
+    </form>
+    <button id="authSwitch" class="auth-switch" type="button">New here? Create an account</button>
+    <p class="auth-footnote">Your conversations are private to your account.</p>
+  </section>
+</div>
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <a class="brand" href="/" aria-label="Banana AI home"><span class="brand-mark">✳</span><span>banana<span class="brand-ai">.ai</span></span></a>
@@ -23,7 +41,7 @@
     <header class="topbar">
       <button id="mobileMenu" class="icon-btn mobile-only" aria-label="Open menu">☰</button>
       <div class="top-title"><span class="live-dot"></span><span id="topMode">AI Assistant</span><span class="model-chip" id="modelChip">HOSTED AI</span></div>
-      <div class="top-actions"><button id="memoryBtn" class="quiet-btn" title="Edit your saved memory">♧ <span>Memory</span></button><button id="themeBtn" class="icon-btn" title="Toggle appearance">◐</button></div>
+      <div class="top-actions"><span id="accountEmail" class="account-email"></span><button id="logoutBtn" class="quiet-btn" type="button" title="Log out">Log out</button><button id="memoryBtn" class="quiet-btn" title="Edit your saved memory">♧ <span>Memory</span></button><button id="themeBtn" class="icon-btn" title="Toggle appearance">◐</button></div>
     </header>
     <section class="chat-area" id="chatArea">
       <div class="welcome" id="welcome">
