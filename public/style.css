@@ -28,3 +28,35 @@ body.authenticated .auth-gate{display:none}
 @media(max-width:760px){.auth-card{padding:24px 20px}.account-email{max-width:90px}.top-actions{gap:2px}.top-actions #logoutBtn{padding:7px 5px;font-size:10px}}
 body.light .auth-card{background:#fff}
 body.light .auth-card input{background:#f3f4fa;color:var(--text)}
+
+/* Immersive 3D login and post-login welcome */
+.auth-card{position:relative;overflow:hidden;isolation:isolate}
+.auth-card:before{content:"";position:absolute;inset:-40% -20% auto;height:320px;background:radial-gradient(ellipse,#8b5cf622,transparent 68%);z-index:-1;pointer-events:none}
+.auth-orb-scene{position:relative;height:112px;width:100%;display:grid;place-items:center;margin:0 auto 8px;perspective:700px}
+.auth-orb{position:relative;z-index:2;width:62px;height:62px;display:grid;place-items:center;border-radius:22px;font-size:35px;color:#111422;background:linear-gradient(140deg,#d8ccff 0%,#8bafff 45%,#67e8f9 100%);box-shadow:inset -8px -10px 18px #252b6c33,inset 5px 5px 15px #fff8,0 0 30px #8b5cf966;transform:rotateX(14deg) rotateY(-20deg);animation:authFloat 4s ease-in-out infinite,authGlow 3s ease-in-out infinite alternate}
+.auth-orbit{position:absolute;border:1px solid #a78bfa55;border-radius:50%;width:100px;height:35px;transform-style:preserve-3d}
+.auth-orbit-a{transform:rotate(-28deg) rotateX(65deg);animation:orbitSpin 7s linear infinite}
+.auth-orbit-b{width:86px;height:50px;border-color:#67e8f94a;transform:rotate(58deg) rotateX(68deg);animation:orbitSpin 9s linear infinite reverse}
+.auth-orbit-c{width:112px;height:62px;border-color:#c4b5fd22;transform:rotate(15deg) rotateY(65deg);animation:orbitSpin 12s linear infinite}
+.auth-scene-glow{position:absolute;bottom:9px;width:90px;height:14px;border-radius:50%;background:#67e8f955;filter:blur(15px)}
+.auth-name-field[hidden],.welcome-overlay[hidden]{display:none!important}
+.auth-name-field{display:flex;flex-direction:column;gap:8px}
+.welcome-overlay{position:fixed;z-index:100;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(ellipse at 50% 45%,#20204b 0%,#0a0d1b 45%,#05060c 100%);animation:welcomeFade .5s ease both}
+.welcome-overlay:before,.welcome-overlay:after{content:"";position:absolute;inset:8%;border:1px solid #a78bfa17;border-radius:50%;transform:rotateX(68deg);pointer-events:none}
+.welcome-overlay:after{inset:16%;border-color:#67e8f91a;transform:rotateY(68deg)}
+.welcome-scene{width:220px;height:220px;position:relative;display:grid;place-items:center;perspective:800px;margin-bottom:20px}
+.welcome-core{width:104px;height:104px;border-radius:34px;display:grid;place-items:center;font-size:57px;color:#0a1020;background:linear-gradient(140deg,#e3d9ff,#a78bfa 40%,#67e8f9);box-shadow:inset -12px -14px 25px #292b7744,inset 8px 8px 20px #fff9,0 0 55px #a78bfa88,0 0 110px #67e8f922;animation:coreArrive 1.2s cubic-bezier(.2,.8,.2,1) both,authGlow 2.4s ease-in-out infinite alternate;transform-style:preserve-3d}
+.welcome-orbit{position:absolute;border:1px solid #bbaaff80;border-radius:50%;transform-style:preserve-3d}
+.welcome-orbit-one{width:190px;height:66px;transform:rotateX(68deg) rotateZ(-20deg);animation:orbitSpin 4s linear infinite}
+.welcome-orbit-two{width:164px;height:92px;border-color:#67e8f977;transform:rotateY(67deg) rotateZ(22deg);animation:orbitSpin 5s linear infinite reverse}
+.welcome-orbit-three{width:206px;height:130px;border-color:#a78bfa30;transform:rotateX(50deg) rotateY(25deg);animation:orbitSpin 8s linear infinite}
+.welcome-kicker{font:10px 'DM Mono',monospace;letter-spacing:2px;color:#67e8f9;margin:5px 0 15px}
+.welcome-overlay h2{font-size:clamp(27px,5vw,43px);letter-spacing:-1.5px;margin:0 0 10px;background:linear-gradient(90deg,#fff,#c4b5fd,#67e8f9);background-clip:text;-webkit-background-clip:text;color:transparent;animation:fadein .7s .2s both}
+.welcome-overlay p{color:#aab2cb;font-size:13px;margin:0 0 25px}
+.welcome-overlay .primary-btn{padding:13px 22px;box-shadow:0 0 25px #a78bfa33;animation:fadein .7s .4s both}
+@keyframes authFloat{0%,100%{transform:translateY(0) rotateX(14deg) rotateY(-20deg)}50%{transform:translateY(-8px) rotateX(25deg) rotateY(20deg)}}
+@keyframes authGlow{from{filter:saturate(.9) brightness(.95)}to{filter:saturate(1.25) brightness(1.15)}}
+@keyframes orbitSpin{from{rotate:0deg}to{rotate:360deg}}
+@keyframes welcomeFade{from{opacity:0;backdrop-filter:blur(0)}to{opacity:1;backdrop-filter:blur(12px)}}
+@keyframes coreArrive{0%{opacity:0;transform:scale(.25) rotateX(55deg) rotateY(90deg)}65%{opacity:1;transform:scale(1.12) rotateX(-12deg) rotateY(-18deg)}100%{transform:scale(1) rotateX(0) rotateY(0)}}
+@media(prefers-reduced-motion:reduce){.auth-orb,.auth-orbit,.welcome-core,.welcome-orbit{animation:none!important}}
