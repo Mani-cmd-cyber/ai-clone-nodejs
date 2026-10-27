@@ -12,6 +12,7 @@ A lightweight Node.js + Express hosted AI assistant based on your existing proje
 - Browser voice input (Urdu, English and Hindi where supported) and spoken replies
 - General, coding, study, writing, planner and researcher modes
 - Three-specialist AI Council
+- World Monitor dashboard using public USGS earthquake, NASA EONET natural-event, and GDELT headline feeds
 - Web research using Tavily when configured, with a public DuckDuckGo fallback
 - Text/code attachments plus PDF and DOCX text extraction (1 MB maximum)
 - Health endpoint, request-size limits and basic per-IP rate limit
