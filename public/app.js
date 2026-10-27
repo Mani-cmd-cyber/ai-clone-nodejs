@@ -98,6 +98,16 @@
     const responseBody = addMessage("assistant", "Banana is thinking…", { loading: true });
     try {
       await persistMessage(userMessage);
+      if ($("agentSelect").value === "computer") {
+        responseBody.textContent = "Checking the local computer companion…";
+        const reply = await executeComputerPrompt(content);
+        responseBody.textContent = reply;
+        const assistantMessage = { role: "assistant", content: reply };
+        messages.push(assistantMessage); await persistMessage(assistantMessage);
+        if (readAloud) speakText(reply);
+        await refreshHistory();
+        return;
+      }
       let researchContext = "";
       if ($("researchToggle").checked) {
         responseBody.textContent = "Researching the web…";
@@ -305,8 +315,37 @@
       return true;
     } catch { setComputerStatus("Companion not reachable. Start desktop-companion/start.bat on this Windows PC and keep its terminal open.", true); return false; }
   }
+  async function executeComputerPrompt(command) {
+    const text = String(command || "").trim();
+    const appMatch = text.match(/^(?:please\s+)?(?:open|launch|start)\s+(notepad|calculator|calc|paint|file explorer|explorer)[.!]?$/i);
+    let payload = null, label = "";
+    if (appMatch) {
+      const name = appMatch[1].toLowerCase();
+      const app = name === "calc" ? "calculator" : name === "file explorer" || name === "explorer" ? "explorer" : name;
+      payload = { action: "open_app", app }; label = "open " + app;
+    } else {
+      const urlMatch = text.match(/^(?:please\s+)?(?:open|visit|go to)\s+(https?:\/\/[^\s]+|(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/[^\s]*)?)[.!]?$/i);
+      if (urlMatch) {
+        let target = urlMatch[1]; if (!/^https?:\/\//i.test(target)) target = "https://" + target;
+        try { const parsed = new URL(target); if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error(); payload = { action: "open_url", url: parsed.href }; label = "open " + parsed.hostname; }
+        catch { return "That website address is not valid. Use an ordinary HTTP or HTTPS link."; }
+      }
+    }
+    if (!payload) return "Computer mode supports only safe commands for now: open Notepad, open Calculator, open Paint, open File Explorer, or open https://example.com.";
+    const token = localStorage.getItem(companionTokenKey) || "";
+    if (!token) return "Computer companion is not paired yet. Click Computer in the top bar, start desktop-companion/start.bat on this PC, then save its pairing token.";
+    try {
+      const health = await fetch("http://127.0.0.1:4317/health", { cache: "no-store" });
+      if (!health.ok) throw new Error("Local companion is not responding.");
+      if (!confirm("Allow Banana AI to " + label + "?")) return "Cancelled. No computer action was taken.";
+      const response = await fetch("http://127.0.0.1:4317/action", { method: "POST", headers: { "Content-Type": "application/json", "X-Banana-Token": token }, body: JSON.stringify(payload), cache: "no-store" });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "The local companion rejected the action.");
+      return result.message || "Action requested successfully.";
+    } catch (error) { return "I could not reach the local Windows companion. Start desktop-companion/start.bat on this PC and keep its terminal open. Details: " + (error.message || "connection failed"); }
+  }
   async function runComputerAction(payload, label) {
-    const token = $("computerToken").value.trim();
+    const token = $("computerToken").value.trim() || localStorage.getItem(companionTokenKey) || "";
     if (!token) return setComputerStatus("Paste and save the local pairing token first.", true);
     if (!await checkComputerCompanion()) return;
     if (!confirm("Allow Banana AI to " + label + "?")) return;
