@@ -17,6 +17,12 @@ app.disable("x-powered-by");
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public"), { extensions: ["html"] }));
 
+app.use("/api", (req, res, next) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  next();
+});
+
 const rateBuckets = new Map();
 app.use("/api", (req, res, next) => {
   const ip = req.ip || req.socket.remoteAddress || "unknown";
@@ -81,8 +87,7 @@ function clearSessionCookie(res) {
 }
 async function readJson(pathname) {
   const result = await get(pathname, { access: "private", token: BLOB_TOKEN });
-  if (result.statusCode === 404) return null;
-  if (result.statusCode !== 200 || !result.stream) return null;
+  if (!result || result.statusCode !== 200 || !result.stream) return null;
   const chunks = [];
   for await (const chunk of result.stream) chunks.push(Buffer.from(chunk));
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
