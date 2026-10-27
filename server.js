@@ -278,6 +278,51 @@ app.post("/api/research", requireUser, async (req, res) => {
   }
 });
 
+
+app.post("/api/agents", requireUser, async (req, res) => {
+  const query = safeText(req.body?.query, 5000);
+  if (!query) return res.status(400).json({ error: "Enter a task for the AI Council." });
+  if (!process.env.AI_API_KEY) return res.status(503).json({ error: "Hosted AI is not configured. Add AI_API_KEY in Vercel Environment Variables." });
+  let memory = "";
+  try {
+    const user = await readJson(userPath(req.user.email));
+    if (user && user.id === req.user.id) memory = safeText(user.memory, 2500);
+  } catch (error) { console.error("Load user memory error:", error.message); }
+  const specialists = [
+    { id: "researcher", name: "Research Analyst", instruction: "Analyze the task carefully. Identify relevant facts, assumptions, unknowns, and evidence needed. Do not invent citations." },
+    { id: "planner", name: "Strategy Planner", instruction: "Turn the task into a practical plan with ordered steps, dependencies, and realistic risks." },
+    { id: "coder", name: "Technical Expert", instruction: "Review the task from a technical/problem-solving angle. Give concrete implementation details, examples, and likely failure points where relevant." }
+  ];
+  try {
+    const results = await Promise.all(specialists.map(async specialist => {
+      const response = await fetch(API_BASE + "/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + process.env.AI_API_KEY, "Content-Type": "application/json",
+          "HTTP-Referer": process.env.APP_URL || "https://banana-ai-assistant.vercel.app", "X-Title": "Banana AI Council"
+        },
+        body: JSON.stringify({
+          model: MODEL, temperature: 0.35, max_tokens: 900,
+          messages: [
+            { role: "system", content: "You are " + specialist.name + ", one specialist in Banana AI's multi-agent council. " + specialist.instruction + " Reply in the user's language, including Roman Urdu when appropriate. Be concise and honest." + (memory ? "\nUser context: " + memory : "") },
+            { role: "user", content: query }
+          ]
+        }),
+        signal: AbortSignal.timeout(45000)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error("AI provider error (HTTP " + response.status + ").");
+      const answer = data?.choices?.[0]?.message?.content;
+      if (typeof answer !== "string" || !answer.trim()) throw new Error(specialist.name + " returned an empty answer.");
+      return { id: specialist.id, name: specialist.name, answer: answer.trim() };
+    }));
+    res.json({ agents: results, model: MODEL });
+  } catch (error) {
+    console.error("AI Council error:", error.message);
+    res.status(502).json({ error: error.name === "TimeoutError" || error.name === "AbortError" ? "The AI Council timed out. Try a shorter task." : error.message || "AI Council failed. Please try again." });
+  }
+});
+
 app.post("/api/chat", requireUser, async (req, res) => {
   const messages = validMessages(req.body?.messages);
   if (!messages.length || !messages.some(m => m.role === "user" && m.content.trim())) {
