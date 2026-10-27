@@ -36,6 +36,7 @@
     <div class="side-label">WORKSPACE</div>
     <button class="nav-item active" data-mode="chat"><span>◈</span> AI Chat</button>
     <button class="nav-item" data-mode="research"><span>⌕</span> Web research</button>
+     <button class="nav-item" data-mode="world"><span>◎</span> World Monitor</button>
     <div class="history-head"><span>RECENT CHATS</span><button id="refreshHistory" title="Refresh history">↻</button></div>
     <div id="historyList" class="history-list"><div class="history-empty">Your conversations will appear here.</div></div>
     <div class="sidebar-bottom"><div class="online-dot"></div><div><strong>Banana AI</strong><small>Your ideas, amplified.</small></div><span class="version">BETA</span></div>
@@ -60,6 +61,10 @@
         </div>
       </div>
       <div id="messages" class="messages" aria-live="polite"></div>
+<div id="worldMonitor" class="world-monitor" hidden>
+  <div class="world-header"><div><div class="eyebrow"><span class="eyebrow-line"></span> LIVE PUBLIC DATA <span class="eyebrow-line"></span></div><h2>World Monitor</h2><p>Earthquakes, natural events and global headlines from public sources.</p></div><button id="worldRefresh" class="quiet-btn" type="button">↻ Refresh</button></div>
+  <div id="worldContent"><p class="modal-copy">Loading public world data…</p></div>
+</div>
     </section>
     <div class="composer-wrap">
       <div class="tool-row">
