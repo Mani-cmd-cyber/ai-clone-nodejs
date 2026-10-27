@@ -312,6 +312,36 @@ app.post("/api/files/extract", requireUser, async (req, res) => {
     res.status(422).json({ error: "Could not read this document. Check that the PDF or DOCX file is valid." });
   }
 });
+app.get("/api/world-monitor", requireUser, async (req, res) => {
+  const fetchJson = async url => {
+    const response = await fetch(url, { headers: { "User-Agent": "BananaAI/1.0 (World Monitor)" }, signal: AbortSignal.timeout(12000) });
+    if (!response.ok) throw new Error("Source returned HTTP " + response.status);
+    return response.json();
+  };
+  const sources = await Promise.allSettled([
+    fetchJson("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"),
+    fetchJson("https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=12"),
+    fetchJson("https://api.gdeltproject.org/api/v2/doc/doc?query=world%20news&mode=ArtList&format=json&maxrecords=6&sort=HybridRel")
+  ]);
+  const earthquakes = sources[0].status === "fulfilled" ? (sources[0].value.features || []).slice(0, 10).map(item => {
+    const p = item.properties || {}, coords = item.geometry?.coordinates || [];
+    return { title: safeText(p.title, 220), magnitude: Number(p.mag) || 0, place: safeText(p.place, 220), time: Number(p.time) || 0, url: safeText(p.url, 1000), longitude: Number(coords[0]) || 0, latitude: Number(coords[1]) || 0 };
+  }) : [];
+  const events = sources[1].status === "fulfilled" ? (sources[1].value.events || []).slice(0, 10).map(item => {
+    const g = Array.isArray(item.geometry) ? item.geometry[item.geometry.length - 1] : null;
+    const coords = g && g.type === "Point" && Array.isArray(g.coordinates) ? g.coordinates : [];
+    const source = Array.isArray(item.sources) ? item.sources.find(x => x.url) : null;
+    return { title: safeText(item.title, 220), category: safeText(item.categories?.[0]?.title || item.categories?.[0]?.id || "Event", 100), date: safeText(g?.date, 80), url: safeText(source?.url || item.link, 1000), longitude: Number(coords[0]) || null, latitude: Number(coords[1]) || null };
+  }) : [];
+  const headlines = sources[2].status === "fulfilled" ? (sources[2].value.articles || []).slice(0, 6).map(item => ({
+    title: safeText(item.title, 240), url: safeText(item.url, 1000), source: safeText(item.domain || item.sourcecountry || "News source", 120), date: safeText(item.seendate, 80), snippet: safeText(item.snippet || "", 500)
+  })).filter(item => item.title && /^https?:\\/\\//i.test(item.url)) : [];
+  const warnings = [];
+  if (sources[0].status === "rejected") warnings.push("USGS earthquake feed is temporarily unavailable.");
+  if (sources[1].status === "rejected") warnings.push("NASA event feed is temporarily unavailable.");
+  if (sources[2].status === "rejected") warnings.push("World headlines are temporarily unavailable.");
+  res.json({ updatedAt: Date.now(), earthquakes, events, headlines, warnings, sourceStatus: { usgs: sources[0].status === "fulfilled", nasa: sources[1].status === "fulfilled", gdelt: sources[2].status === "fulfilled" } });
+});
 app.post("/api/research", requireUser, async (req, res) => {
   const query = safeText(req.body?.query, 500);
   if (!query) return res.status(400).json({ error: "Research query is required." });
