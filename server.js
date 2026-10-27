@@ -460,7 +460,7 @@ async function streamAI(messages, res, options = {}) {
         res.write("event: error\ndata: " + JSON.stringify({ error: error.message || "AI stream interrupted." }) + "\n\n");
         return;
       }
-      if (error.name === "TimeoutError" || error.name === "AbortError") continue;
+      if (error.name === "TimeoutError" || error.name === "AbortError") break;
     }
   }
   res.write("event: error\ndata: " + JSON.stringify({ error: lastError?.message || "Could not reach a working hosted AI model." }) + "\n\n");
