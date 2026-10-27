@@ -127,7 +127,7 @@ function verifyPassword(password, user) {
 }
 
 async function requestAI(messages, options = {}) {
-  const models = [...new Set([MODEL, "meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen3-4b:free"])];
+  const models = [...new Set([MODEL, "openrouter/free"])];
   let lastError = null;
   for (const model of models) {
     try {
@@ -412,7 +412,7 @@ app.post("/api/agents", requireUser, async (req, res) => {
 
 
 async function streamAI(messages, res, options = {}) {
-  const models = [...new Set([MODEL, "meta-llama/llama-3.3-70b-instruct:free", "qwen/qwen3-4b:free"])];
+  const models = [...new Set([MODEL, "openrouter/free"])];
   let lastError = null, anyToken = false;
   for (const model of models) {
     try {
