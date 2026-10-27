@@ -70,8 +70,9 @@
         <label class="research-toggle"><input id="researchToggle" type="checkbox"><span>Web research</span></label>
       </div>
       <form id="chatForm" class="composer">
+        <div id="attachmentChip" class="attachment-chip" hidden><span id="attachmentName"></span><button type="button" id="removeAttachment" aria-label="Remove attachment">×</button></div>
         <textarea id="prompt" rows="1" maxlength="8000" placeholder="Ask Banana anything..." autocomplete="off"></textarea>
-        <div class="composer-bottom"><div class="composer-tools"><button type="button" id="voiceBtn" class="tool-btn" title="Voice input">♩ <span>Voice</span></button><button type="button" id="speakToggle" class="tool-btn" title="Toggle spoken responses">◖ <span>Read aloud</span></button><span class="tool-hint">Enter to send · Shift+Enter for new line</span></div><button id="send" class="send-btn" type="submit" aria-label="Send message">↑</button></div>
+        <div class="composer-bottom"><div class="composer-tools"><input id="fileInput" type="file" hidden accept=".txt,.md,.csv,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.xml,.log,.yaml,.yml,.sql,.m,.cpp,.c,.h,.java,.sh,.ps1"><button type="button" id="attachBtn" class="tool-btn" title="Attach a text or code file">📎 <span>Attach file</span></button><button type="button" id="voiceBtn" class="tool-btn" title="Voice input">♩ <span>Voice</span></button><button type="button" id="speakToggle" class="tool-btn" title="Toggle spoken responses">◖ <span>Read aloud</span></button><span class="tool-hint">Enter to send · Shift+Enter for new line</span></div><button id="send" class="send-btn" type="submit" aria-label="Send message">↑</button></div>
       </form>
       <div class="disclaimer">Banana can make mistakes. Verify important information. <span>·</span> Your API key stays on the server.</div>
     </div>
