@@ -54,33 +54,36 @@
     return true;
   }
   async function syncCoreAudio() {
-    if (!coreAudio) return;
-    const activeChat = coreSoundOn && document.visibilityState === "visible";
-    if (activeChat) {
+    if (!coreAudio || !coreSoundOn) return;
+    if (document.visibilityState === "visible") {
       try { await coreAudio.ctx.resume(); } catch {}
-      const target = document.body.classList.contains("ai-thinking") ? 0.10 : 0.075;
+      const target = document.body.classList.contains("ai-thinking") ? 0.032 : 0.025;
       coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
     } else {
       if (coreAudio.ctx.state === "running") coreAudio.master.gain.setTargetAtTime(0, coreAudio.ctx.currentTime, 0.25);
-      if (!coreSoundOn || document.visibilityState !== "visible") {
-        try { await coreAudio.ctx.suspend(); } catch {}
-      }
+      try { await coreAudio.ctx.suspend(); } catch {}
     }
   }
   function setCoreSound(enabled) {
-    coreSoundOn = enabled;
+    // Sound is always enabled; this control is intentionally not an off switch.
+    coreSoundOn = true;
     const button = $("ambienceBtn");
-    button.setAttribute("aria-pressed", String(enabled));
-    button.classList.toggle("active", enabled);
-    button.innerHTML = enabled ? '♫ <span>Core sound on</span>' : '♫ <span>Core sound off</span>';
-    button.title = enabled ? "Turn off JARVIS-style ambient sound" : "Turn on JARVIS-style ambient sound";
-    document.body.classList.toggle("core-sound-enabled", enabled);
-    if (enabled && !createCoreAudio()) { coreSoundOn = false; button.setAttribute("aria-pressed", "false"); button.classList.remove("active"); button.innerHTML = '♫ <span>Core sound off</span>'; return; }
+    button.setAttribute("aria-pressed", "true");
+    button.classList.add("active");
+    button.innerHTML = '♫ <span>Core sound on</span>';
+    button.title = "JARVIS-style ambient sound is enabled";
+    document.body.classList.add("core-sound-enabled");
+    if (!createCoreAudio()) return;
     syncCoreAudio();
-    if (enabled) toast("JARVIS core ambience enabled");
   }
-  // One-way enable: once the user activates sound, this button never toggles it off.
-  $("ambienceBtn").addEventListener("click", () => { if (!coreSoundOn) setCoreSound(true); else syncCoreAudio(); });
+  // Try immediately on page load. Browsers may block autoplay until the visitor interacts once.
+  coreSoundOn = true;
+  setCoreSound(true);
+  const unlockCoreAudio = () => { if (coreSoundOn) syncCoreAudio(); };
+  ["pointerdown", "keydown", "touchstart"].forEach(eventName =>
+    document.addEventListener(eventName, unlockCoreAudio, { once: true, passive: true })
+  );
+  $("ambienceBtn").addEventListener("click", unlockCoreAudio);
   document.addEventListener("visibilitychange", syncCoreAudio);
 
   function toast(text) {
