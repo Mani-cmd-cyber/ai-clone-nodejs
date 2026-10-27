@@ -357,12 +357,12 @@ app.post("/api/research", requireUser, async (req, res) => {
       console.warn("Tavily search failed; trying public search fallback:", response.status);
     }
     const response = await fetch("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(query), {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; BananaAI/1.0)" }, signal: AbortSignal.timeout(15000)
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; BananaAI/1.0)" }, signal: AbortSignal.timeout(12000)
     });
     if (!response.ok) throw new Error("Public search returned HTTP " + response.status);
     const page = await response.text();
     const decode = value => value.replace(/<[^>]*>/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
-    const links = [...page.matchAll(/class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)].slice(0, 5);
+    const links = [...page.matchAll(/class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)].slice(0, 8);
     const snippets = [...page.matchAll(/class="result__snippet"[^>]*>([\s\S]*?)<\/(?:a|div)>/g)].map(m => decode(m[1]));
     const results = links.map((m, i) => {
       let url = m[1].replace(/&amp;/g, "&");
