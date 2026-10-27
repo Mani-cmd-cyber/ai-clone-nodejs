@@ -59,7 +59,7 @@
       document.body.classList.contains("authenticated") && $("worldMonitor").hidden;
     if (activeChat) {
       try { await coreAudio.ctx.resume(); } catch {}
-      const target = document.body.classList.contains("ai-thinking") ? 0.035 : 0.024;
+      const target = document.body.classList.contains("ai-thinking") ? 0.009 : 0.006;
       coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
     } else {
       if (coreAudio.ctx.state === "running") coreAudio.master.gain.setTargetAtTime(0, coreAudio.ctx.currentTime, 0.25);
