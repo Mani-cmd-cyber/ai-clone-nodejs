@@ -479,6 +479,19 @@
     }
   }
 
+  function startBootOverlay() {
+    const overlay = $("welcomeOverlay");
+    overlay.hidden = false;
+    overlay.classList.remove("boot-complete");
+    document.body.classList.add("welcoming");
+    $("welcomeTitle").textContent = "SYSTEM INITIALIZING";
+    $("welcomeSubtitle").textContent = "Authenticating and waking the AI core…";
+    const progress = overlay.querySelector(".boot-progress span");
+    if (progress) { progress.style.animation = "none"; void progress.offsetWidth; progress.style.animation = ""; }
+    const status = $("stageStatus");
+    if (status) status.textContent = "INITIALIZING SYSTEM · AUTHENTICATING";
+  }
+
   function welcomeUser(name) {
     const overlay = $("welcomeOverlay");
     const cleanName = String(name || "Janab").replace(/[<>]/g, "").slice(0, 80);
@@ -487,6 +500,8 @@
     overlay.hidden = false;
     overlay.classList.remove("boot-complete");
     document.body.classList.add("welcoming");
+    const progress = overlay.querySelector(".boot-progress span");
+    if (progress) { progress.style.animation = "none"; void progress.offsetWidth; progress.style.animation = ""; }
     const status = $("stageStatus");
     if (status) status.textContent = "SYSTEM ACTIVATED · READY FOR YOUR COMMAND";
     window.setTimeout(() => {
@@ -529,7 +544,7 @@
     };
     $("authSwitch").addEventListener("click", () => setMode(mode === "login" ? "register" : "login"));
     authForm.addEventListener("submit", async e => {
-      e.preventDefault(); playStartupSequence(); authSubmit.disabled = true; authError.textContent = "";
+      e.preventDefault(); playStartupSequence(); startBootOverlay(); authSubmit.disabled = true; authError.textContent = "";
       const email = $("authEmail").value.trim();
       const password = $("authPassword").value;
       try {
@@ -538,7 +553,7 @@
           method: "POST", body: JSON.stringify({ email, password, name })
         });
         showApp(result.user, true); authForm.reset(); toast(mode === "login" ? "Logged in successfully" : "Account created successfully");
-      } catch (err) { authError.textContent = err.message; }
+      } catch (err) { $("welcomeOverlay").hidden = true; document.body.classList.remove("welcoming"); authError.textContent = err.message; }
       finally { authSubmit.disabled = false; }
     });
     $("logoutBtn").addEventListener("click", async () => {
