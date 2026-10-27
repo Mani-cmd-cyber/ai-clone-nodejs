@@ -90,3 +90,6 @@ body.light .auth-card input{background:#f3f4fa;color:var(--text)}
 .attachment-chip button{border:0;background:transparent;color:var(--text-muted);font-size:18px;cursor:pointer}
 #attachBtn{white-space:nowrap}
 @media(max-width:560px){#attachBtn span{display:none}.composer-tools{gap:5px}}
+
+#voiceLanguage{max-width:78px;padding:6px 4px;font-size:10px}
+@media(max-width:760px){#voiceLanguage{max-width:68px;padding:6px 2px}}
