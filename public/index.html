@@ -44,7 +44,7 @@
     <header class="topbar">
       <button id="mobileMenu" class="icon-btn mobile-only" aria-label="Open menu">☰</button>
       <div class="top-title"><span class="live-dot"></span><span id="topMode">AI Assistant</span><span class="model-chip" id="modelChip">HOSTED AI</span></div>
-      <div class="top-actions"><span id="accountEmail" class="account-email"></span><button id="logoutBtn" class="quiet-btn" type="button" title="Log out">Log out</button><button id="memoryBtn" class="quiet-btn" title="Edit your saved memory">♧ <span>Memory</span></button><button id="themeBtn" class="icon-btn" title="Toggle appearance">◐</button></div>
+      <div class="top-actions"><span id="accountEmail" class="account-email"></span><button id="logoutBtn" class="quiet-btn" type="button" title="Log out">Log out</button><button id="computerBtn" class="quiet-btn" type="button" title="Connect safe Windows actions">⌘ <span>Computer</span></button><button id="memoryBtn" class="quiet-btn" title="Edit your saved memory">♧ <span>Memory</span></button><button id="themeBtn" class="icon-btn" title="Toggle appearance">◐</button></div>
     </header>
     <section class="chat-area" id="chatArea">
       <div class="welcome" id="welcome">
@@ -84,6 +84,21 @@
   <p class="modal-copy">Add context you want Banana to use in future replies on your account across sessions. Avoid passwords or sensitive information.</p>
   <textarea id="memoryText" rows="5" placeholder="For example: I prefer simple explanations in Roman Urdu..."></textarea>
   <div class="modal-actions"><button id="clearMemory" class="quiet-btn" type="button">Clear memory</button><button id="saveMemory" class="primary-btn" type="button">Save memory</button></div>
+</dialog>
+<dialog id="computerDialog" class="modal computer-modal">
+  <div class="modal-head"><div><span class="modal-icon">⌘</span><h2>Computer assistant</h2></div><button id="closeComputer" class="icon-btn" type="button" aria-label="Close">×</button></div>
+  <p class="modal-copy">Connect the optional Windows companion to open a small allowlist of apps or websites. Every action requires your confirmation. It never runs arbitrary AI-generated commands.</p>
+  <label for="computerToken">Local pairing token</label>
+  <input id="computerToken" type="password" autocomplete="off" placeholder="Paste token from the companion terminal">
+  <div class="modal-actions"><button id="saveComputerToken" class="quiet-btn" type="button">Save token on this browser</button><button id="checkComputer" class="primary-btn" type="button">Check connection</button></div>
+  <p id="computerStatus" class="modal-copy" role="status">Companion status has not been checked.</p>
+  <label for="computerApp">Open a safe Windows app</label>
+  <select id="computerApp" class="computer-select"><option value="notepad">Notepad</option><option value="calculator">Calculator</option><option value="paint">Paint</option><option value="explorer">File Explorer</option></select>
+  <button id="openComputerApp" class="primary-btn computer-action" type="button">Open selected app</button>
+  <label for="computerUrl">Open a website</label>
+  <input id="computerUrl" type="url" value="https://www.google.com" placeholder="https://example.com">
+  <button id="openComputerUrl" class="primary-btn computer-action" type="button">Open website in browser</button>
+  <p class="auth-footnote">The companion must be running on this Windows PC. Pairing token is saved only in this browser.</p>
 </dialog>
 <script src="/app.js" defer></script>
 </body>
