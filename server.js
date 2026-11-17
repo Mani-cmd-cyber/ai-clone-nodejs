@@ -554,7 +554,7 @@ app.get("/site/:id", async (req, res) => {
     res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "no-referrer");
-    res.setHeader("Content-Security-Policy", "sandbox allow-scripts allow-forms; default-src https: data: blob:; img-src https: data: blob:; style-src https: 'unsafe-inline'; script-src https: 'unsafe-inline'; font-src https: data:; connect-src https:; form-action https:; base-uri 'none'; frame-ancestors 'none'");
+    res.setHeader("Content-Security-Policy", "sandbox allow-scripts allow-forms; default-src https: data: blob:; img-src https: data: blob:; style-src https: 'unsafe-inline'; script-src https: 'unsafe-inline'; font-src https: data:; connect-src https:; form-action https:; base-uri 'none'");
     res.send(record.html);
   } catch (error) {
     console.error("Public website read error:", error?.message || error);
