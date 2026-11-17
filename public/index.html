@@ -93,7 +93,7 @@
       <form id="chatForm" class="composer">
         <div id="attachmentChip" class="attachment-chip" hidden><span id="attachmentName"></span><button type="button" id="removeAttachment" aria-label="Remove attachment">×</button></div>
         <textarea id="prompt" rows="1" maxlength="8000" placeholder="Ask Banana anything..." autocomplete="off"></textarea>
-        <div class="composer-bottom"><div class="composer-tools"><input id="fileInput" type="file" multiple hidden accept=".txt,.md,.csv,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.xml,.log,.yaml,.yml,.sql,.m,.cpp,.c,.h,.java,.sh,.ps1,.pdf,.docx"><button type="button" id="attachBtn" class="tool-btn" title="Attach a text or code file">📎 <span>Attach file</span></button><select id="voiceLanguage" aria-label="Voice input language" title="Voice input language"><option value="ur-PK">Urdu</option><option value="en-US">English</option><option value="hi-IN">Hindi</option></select><button type="button" id="voiceBtn" class="tool-btn" title="Voice input">♩ <span>Voice</span></button><button type="button" id="speakToggle" class="tool-btn" title="Toggle spoken responses">◖ <span>Read aloud</span></button><span class="tool-hint">Enter to send · Shift+Enter for new line</span></div><button id="send" class="send-btn" type="submit" aria-label="Send message">↑</button></div>
+        <div class="composer-bottom"><div class="composer-tools"><input id="fileInput" type="file" multiple hidden accept=".txt,.md,.csv,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.xml,.log,.yaml,.yml,.sql,.m,.cpp,.c,.h,.java,.sh,.ps1,.pdf,.docx"><button type="button" id="attachBtn" class="tool-btn" title="Attach a text or code file">📎 <span>Attach file</span></button><button type="button" id="cameraBtn" class="tool-btn" title="Take a photo with your camera">▣ <span>Camera</span></button><select id="voiceLanguage" aria-label="Voice input language" title="Voice input language"><option value="ur-PK">Urdu</option><option value="en-US">English</option><option value="hi-IN">Hindi</option></select><button type="button" id="voiceBtn" class="tool-btn" title="Voice input">♩ <span>Voice</span></button><button type="button" id="speakToggle" class="tool-btn" title="Toggle spoken responses">◖ <span>Read aloud</span></button><span class="tool-hint">Enter to send · Shift+Enter for new line</span></div><button id="send" class="send-btn" type="submit" aria-label="Send message">↑</button></div>
       </form>
       <div class="disclaimer">Banana can make mistakes. Verify important information. <span>·</span> Your API key stays on the server.</div>
     </div>
@@ -120,6 +120,12 @@
   <input id="computerUrl" type="url" value="https://www.google.com" placeholder="https://example.com">
   <button id="openComputerUrl" class="primary-btn computer-action" type="button">Open website in browser</button>
   <p class="auth-footnote">The companion must be running on this Windows PC. Pairing token is saved only in this browser.</p>
+</dialog>
+<dialog id="cameraDialog" class="modal camera-dialog">
+  <form method="dialog" class="modal-head"><div><span class="modal-icon">▣</span><h2>Camera</h2></div><button id="closeCamera" class="icon-btn" type="button" aria-label="Close camera">×</button></form>
+  <p class="modal-copy">Allow camera access, frame your photo, then capture it to attach to your message.</p>
+  <video id="cameraPreview" class="camera-preview" autoplay playsinline muted></video>
+  <div class="camera-actions"><button id="capturePhoto" class="primary-btn" type="button">Capture photo</button></div>
 </dialog>
 <script src="/app.js" defer></script>
 </body>
