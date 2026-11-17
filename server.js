@@ -482,6 +482,86 @@ async function streamAI(messages, res, options = {}) {
   res.write("event: error\ndata: " + JSON.stringify({ error: lastError?.message || "Could not reach a working hosted AI model." }) + "\n\n");
 }
 
+
+function websitePath(id) { return "banana/websites/" + id + ".json"; }
+function makeWebsiteSlug(title) {
+  const base = String(title || "website").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "website";
+  return base + "-" + crypto.randomBytes(5).toString("hex");
+}
+function parseGeneratedWebsite(raw) {
+  let source = String(raw || "").trim().replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/, "");
+  let parsed;
+  try { parsed = JSON.parse(source); }
+  catch {
+    const start = source.indexOf("{"), end = source.lastIndexOf("}");
+    if (start < 0 || end <= start) throw new Error("The AI did not return a valid website. Please try a more detailed prompt.");
+    parsed = JSON.parse(source.slice(start, end + 1));
+  }
+  const title = safeText(parsed.title, 100) || "Your new website";
+  const description = safeText(parsed.description, 240);
+  const html = typeof parsed.html === "string" ? parsed.html.trim() : "";
+  if (!html || html.length > 180000 || !/<html[\s>]/i.test(html) || !/<body[\s>]/i.test(html)) {
+    throw new Error("The generated website was incomplete. Please try again with a simpler prompt.");
+  }
+  return { title, description, html };
+}
+
+app.post("/api/websites/generate", requireUser, async (req, res) => {
+  try {
+    if (!storageReady()) return res.status(503).json({ error: "Website publishing storage is not configured yet." });
+    if (!process.env.AI_API_KEY) return res.status(503).json({ error: "Hosted AI is not configured. Add AI_API_KEY in Vercel Environment Variables." });
+    const prompt = safeText(req.body?.prompt, 5000);
+    if (prompt.length < 8) return res.status(400).json({ error: "Please describe the website you want in a little more detail." });
+    const system = [
+      "You are Banana AI's expert autonomous website designer and front-end engineer.",
+      "Create a polished, complete, visually impressive, responsive website from the user's brief.",
+      "Return ONLY valid JSON with exactly these string fields: title, description, html. No markdown fences.",
+      "The html field must contain a complete standalone HTML5 document with inline CSS and JavaScript.",
+      "Design requirements: strong visual identity, premium typography, deliberate color palette, beautiful hero section, real useful sections, clear navigation, responsive mobile layout, accessible contrast, hover/focus states, polished buttons, realistic sample content, and thoughtful spacing.",
+      "Use CSS gradients, inline SVG, and remote Unsplash images via images.unsplash.com when suitable. Add useful interactions with vanilla JavaScript. Avoid external JS frameworks and build tools.",
+      "Make the result specific to the requested business/topic, not a generic template. Include working in-page navigation, CTA buttons, mobile menu when relevant, and meaningful footer.",
+      "Do not include any claims that the website is actually connected to payment, booking, email, databases, or APIs unless the user supplied such integrations. For forms, provide front-end validation and a clear demo-success state only.",
+      "Do not request, expose, store, or transmit secrets, credentials, or personal data. Do not include malware, tracking pixels, crypto miners, hidden redirects, or obfuscated code.",
+      "The page is served in an isolated sandboxed document. Keep all styling and scripts inside the returned HTML; do not depend on the Banana AI app's cookies or APIs.",
+      "Keep the entire HTML document under 150 KB. Return only the JSON object."
+    ].join("\n");
+    const result = await requestAI([
+      { role: "system", content: system },
+      { role: "user", content: "Build this website:\n" + prompt }
+    ], { temperature: 0.72, maxTokens: 7000, timeout: 90000 });
+    const site = parseGeneratedWebsite(result.reply);
+    const id = makeWebsiteSlug(site.title);
+    const record = { id, userId: req.user.id, title: site.title, description: site.description, html: site.html, createdAt: Date.now() };
+    await writeJson(websitePath(id), record);
+    res.status(201).json({ id, title: site.title, description: site.description, url: "/site/" + id, model: result.model });
+  } catch (error) {
+    console.error("Website generation error:", error?.message || error);
+    const message = error.status === 429 ? "AI provider rate limit reached. Please wait and try again."
+      : error.name === "TimeoutError" || error.name === "AbortError" ? "Website generation took too long. Try a shorter prompt."
+      : error.message || "Could not generate this website. Please try again.";
+    res.status(502).json({ error: message });
+  }
+});
+
+app.get("/site/:id", async (req, res) => {
+  try {
+    const id = safeText(req.params.id, 64);
+    if (!/^[a-z0-9-]{6,64}$/.test(id)) return res.status(404).send("Website not found.");
+    const record = await readJson(websitePath(id));
+    if (!record || record.id !== id || typeof record.html !== "string") return res.status(404).send("Website not found.");
+    res.status(200);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("Content-Security-Policy", "sandbox allow-scripts allow-forms; default-src https: data: blob:; img-src https: data: blob:; style-src https: 'unsafe-inline'; script-src https: 'unsafe-inline'; font-src https: data:; connect-src https:; form-action https:; base-uri 'none'; frame-ancestors 'none'");
+    res.send(record.html);
+  } catch (error) {
+    console.error("Public website read error:", error?.message || error);
+    res.status(500).send("This website is temporarily unavailable. Please try again.");
+  }
+});
+
 app.post("/api/chat/stream", requireUser, async (req, res) => {
   const messages = validMessages(req.body?.messages);
   if (!messages.length || !messages.some(m => m.role === "user" && m.content.trim())) return res.status(400).json({ error: "Please enter a message." });
