@@ -615,7 +615,8 @@
       const url = new URL(result.url, window.location.origin).href;
       $("websiteTitle").textContent = result.title;
       $("websiteDescription").textContent = result.description || "Your new responsive website is ready.";
-      $("websiteUrlText").textContent = url;
+      $("websiteUrlLink").href = url;
+      $("websiteUrlLink").textContent = url;
       $("openWebsiteLink").href = url;
       $("websitePreview").src = url;
       $("websiteResult").hidden = false;
