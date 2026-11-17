@@ -140,7 +140,7 @@ function verifyPassword(password, user) {
 }
 
 async function requestAI(messages, options = {}) {
-  const models = [...new Set([MODEL, "openrouter/free"])];
+  const models = [...new Set(options.models || [MODEL, "openrouter/free"])];
   let lastError = null;
   for (const model of models) {
     try {
@@ -152,15 +152,21 @@ async function requestAI(messages, options = {}) {
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        const reply = data?.choices?.[0]?.message?.content;
-        if (typeof reply !== "string" || !reply.trim()) throw new Error("The AI provider returned an empty response.");
-        return { reply: reply.trim(), model: data.model || model };
+        const content = data?.choices?.[0]?.message?.content;
+        const reply = typeof content === "string" ? content
+          : Array.isArray(content) ? content.map(part => typeof part === "string" ? part : (part?.text || "")).join("\n")
+          : "";
+        if (reply.trim()) return { reply: reply.trim(), model: data.model || model };
+        lastError = new Error("The AI provider returned an empty response from " + model + ".");
+        continue;
       }
       lastError = Object.assign(new Error(data?.error?.message || ("HTTP " + response.status)), { status: response.status });
-      if (![402, 404, 429].includes(response.status)) break;
+      if (![402, 404, 408, 429, 500, 502, 503, 504].includes(response.status)) break;
     } catch (error) {
       lastError = error;
-      if (error.name === "TimeoutError" || error.name === "AbortError") break;
+      if (error.name === "TimeoutError" || error.name === "AbortError") {
+        if (model === models[models.length - 1]) break;
+      }
     }
   }
   if (lastError && /free-models-per-day|rate limit exceeded/i.test(lastError.message || "")) {
@@ -528,7 +534,18 @@ app.post("/api/websites/generate", requireUser, async (req, res) => {
     const result = await requestAI([
       { role: "system", content: system },
       { role: "user", content: "Build this website:\n" + prompt }
-    ], { temperature: 0.72, maxTokens: 7000, timeout: 90000 });
+    ], {
+      temperature: 0.55,
+      maxTokens: 12000,
+      timeout: 110000,
+      models: [
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "nvidia/nemotron-3.5-super-vl:free",
+        "baidu/ernie-5.5-flash-preview:free",
+        "thinkingmachines/inkling-2-small:free",
+        "openrouter/free"
+      ]
+    });
     const site = parseGeneratedWebsite(result.reply);
     const id = makeWebsiteSlug(site.title);
     const record = { id, userId: req.user.id, title: site.title, description: site.description, html: site.html, createdAt: Date.now() };
