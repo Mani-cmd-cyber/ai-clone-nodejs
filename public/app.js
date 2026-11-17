@@ -14,78 +14,46 @@
   }
 
   let recognition = null, pendingFiles = [];
-  // Original soft sci-fi machine-core ambience, synthesized locally (no movie audio or external file).
-  let coreAudio = null, coreSoundOn = false;
-  function createCoreAudio() {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) { toast("Ambient audio is not supported in this browser."); return false; }
-    if (coreAudio) return true;
-    const ctx = new AudioContextClass();
-    const master = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass"; filter.frequency.value = 1400; filter.Q.value = 0.8;
-    master.gain.value = 0;
-    filter.connect(master); master.connect(ctx.destination);
-
-    // Low continuous hum with gently detuned harmonics.
-    const droneA = ctx.createOscillator(), droneB = ctx.createOscillator(), shimmer = ctx.createOscillator();
-    const gainA = ctx.createGain(), gainB = ctx.createGain(), gainC = ctx.createGain();
-    droneA.type = "sine"; droneA.frequency.value = 55;
-    droneB.type = "sine"; droneB.frequency.value = 82.41; droneB.detune.value = -5;
-    shimmer.type = "sine"; shimmer.frequency.value = 164.81;
-    gainA.gain.value = 0.48; gainB.gain.value = 0.24; gainC.gain.value = 0.055;
-    droneA.connect(gainA); droneB.connect(gainB); shimmer.connect(gainC);
-    gainA.connect(filter); gainB.connect(filter); gainC.connect(filter);
-
-    // Soft repeating "tun-tun" pulse, like a fictional machine powering a core.
-    const pulse = ctx.createOscillator(), pulseGain = ctx.createGain();
-    const pulseLfo = ctx.createOscillator(), pulseLfoGain = ctx.createGain();
-    pulse.type = "sine"; pulse.frequency.value = 110;
-    pulseGain.gain.value = 0.16;
-    pulseLfo.type = "sine"; pulseLfo.frequency.value = 0.72; pulseLfoGain.gain.value = 0.08;
-    pulseLfo.connect(pulseLfoGain); pulseLfoGain.connect(pulseGain.gain);
-    pulse.connect(pulseGain); pulseGain.connect(filter);
-
-    const lfo = ctx.createOscillator(), lfoGain = ctx.createGain();
-    lfo.type = "sine"; lfo.frequency.value = 0.16; lfoGain.gain.value = 0.015;
-    lfo.connect(lfoGain); lfoGain.connect(master.gain);
-    droneA.start(); droneB.start(); shimmer.start(); pulse.start(); pulseLfo.start(); lfo.start();
-    coreAudio = { ctx, master, droneA, droneB, shimmer, pulse, pulseLfo, lfo };
-    return true;
-  }
-  // Original JARVIS-inspired electronic background motif; synthesized locally, not copied audio.
-  let ambientBeepTimer = null;
-  function playAmbientBeep() {}
-  function scheduleAmbientBeeps() {}
-  async function syncCoreAudio() {
-    if (!coreAudio || !coreSoundOn) return;
-    // Keep ambient core running while the site is open, including during tasks and results.
-    try { if (coreAudio.ctx.state !== "running") await coreAudio.ctx.resume(); } catch {}
-    const target = document.body.classList.contains("ai-thinking") ? 0.032 : 0.025;
-    coreAudio.master.gain.setTargetAtTime(target, coreAudio.ctx.currentTime, 0.8);
-  }
+  let recognition = null, pendingFiles = [], pendingImage = null, cameraStream = null;
+  let soundEffectsOn = true;
+  // No continuous background drone or beeps: only short interface sounds.
+  function syncCoreAudio() {}
   function setCoreSound(enabled) {
-    // Sound is always enabled; this control is intentionally not an off switch.
-    coreSoundOn = true;
+    soundEffectsOn = Boolean(enabled);
     const button = $("ambienceBtn");
-    button.setAttribute("aria-pressed", "true");
-    button.classList.add("active");
-    button.innerHTML = '♫ <span>Core sound on</span>';
-    button.title = "JARVIS-style ambient sound is enabled";
-    document.body.classList.add("core-sound-enabled");
-    if (!createCoreAudio()) return;
-    syncCoreAudio();
-    scheduleAmbientBeeps();
+    button.setAttribute("aria-pressed", String(soundEffectsOn));
+    button.classList.toggle("active", soundEffectsOn);
+    button.innerHTML = soundEffectsOn ? '♫ <span>Sounds on</span>' : '♫ <span>Sounds off</span>';
+    button.title = "Toggle short interface and completion sounds";
   }
-  // Try immediately on page load. Browsers may block autoplay until the visitor interacts once.
-  coreSoundOn = true;
+  function playTone(frequency, start, duration, volume) {
+    if (!soundEffectsOn) return;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    try {
+      const ctx = new AudioContextClass();
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(frequency, ctx.currentTime + start);
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.035, ctx.currentTime + start + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + duration);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + start); osc.stop(ctx.currentTime + start + duration + 0.03);
+      osc.onended = () => { if (ctx.state !== "closed") ctx.close().catch(() => {}); };
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    } catch {}
+  }
+  function playBeep(kind) {
+    if (kind === "tap") playTone(660, 0, 0.055, 0.018);
+    else playTone(740, 0, 0.09, 0.035);
+  }
+  function playCompletionChime() {
+    playTone(660, 0, 0.13, 0.035);
+    playTone(880, 0.12, 0.19, 0.035);
+  }
   setCoreSound(true);
-  const unlockCoreAudio = () => { if (coreSoundOn) syncCoreAudio(); };
-  ["pointerdown", "keydown", "touchstart"].forEach(eventName =>
-    document.addEventListener(eventName, unlockCoreAudio, { once: true, passive: true })
-  );
-  $("ambienceBtn").addEventListener("click", unlockCoreAudio);
-  document.addEventListener("visibilitychange", () => { syncCoreAudio(); if (!document.hidden && coreSoundOn) playAmbientBeep(); });
+  $("ambienceBtn").addEventListener("click", () => setCoreSound(!soundEffectsOn));
 
   function toast(text) {
     const el = $("toast"); el.textContent = text; el.classList.add("show");
@@ -322,8 +290,12 @@
     utterance.rate = options.rate ?? 0.91;
     utterance.pitch = options.pitch ?? 0.76;
     utterance.volume = options.volume ?? 0.72;
+    const requestedLanguage = $("voiceLanguage")?.value || "en-US";
+    utterance.lang = requestedLanguage;
     const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v => /en-US|en-GB|en-IN/i.test(v.lang) && /natural|online|english|aria|guy/i.test(v.name))
+    const languagePrefix = requestedLanguage.split("-")[0].toLowerCase();
+    const preferred = voices.find(v => v.lang.toLowerCase() === requestedLanguage.toLowerCase())
+      || voices.find(v => v.lang.toLowerCase().startsWith(languagePrefix + "-"))
       || voices.find(v => /^en/i.test(v.lang));
     if (preferred) utterance.voice = preferred;
     window.speechSynthesis.speak(utterance);
@@ -544,13 +516,13 @@
     }
     const available = Math.max(0, 4 - pendingFiles.length);
     const files = selected.slice(0, available);
-    const allowed = /\\.(txt|md|csv|json|js|ts|jsx|tsx|py|html|css|xml|log|yaml|yml|sql|m|cpp|c|h|java|sh|ps1|pdf|docx)$/i;
+    const allowed = /\.(txt|md|csv|json|js|ts|jsx|tsx|py|html|css|xml|log|yaml|yml|sql|m|cpp|c|h|java|sh|ps1|pdf|docx)$/i;
     try {
       for (const file of files) {
         if (!allowed.test(file.name)) { toast(file.name + ": unsupported file type."); continue; }
         if (file.size > 1024 * 1024) { toast(file.name + ": maximum file size is 1 MB."); continue; }
         let text = "";
-        if (/\\.(pdf|docx)$/i.test(file.name)) {
+        if (/\.(pdf|docx)$/i.test(file.name)) {
           toast("Extracting " + file.name + "…");
           const bytes = new Uint8Array(await file.arrayBuffer());
           let binary = "";
