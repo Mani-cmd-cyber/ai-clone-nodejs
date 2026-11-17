@@ -540,7 +540,9 @@ app.post("/api/websites/generate", requireUser, async (req, res) => {
       timeout: 25000,
       models: [
         "openrouter/free",
-        "baidu/ernie-5.5-flash-preview:free"
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "nvidia/nemotron-3.5-super-vl:free",
+        "inclusionai/ling-3.2-flash:free"
       ]
     });
     const site = parseGeneratedWebsite(result.reply);
