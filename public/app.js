@@ -137,7 +137,6 @@
   }
   async function sendMessage(raw) {
     const content = raw.trim(); if ((!content && !pendingFiles.length && !pendingImage) || isSending) return;
-    announceMachine("Okay, sir. I'll check that for you.");
     $("worldMonitor").hidden = true; messagesEl.hidden = false;
     isSending = true; playBeep("tap"); document.body.classList.add("ai-thinking"); syncCoreAudio(); sendBtn.disabled = true; sendBtn.textContent = "…";
     const attachedFiles = [...pendingFiles];
@@ -167,7 +166,6 @@
         const assistantMessage = { role: "assistant", content: reply };
         messages.push(assistantMessage); await persistMessage(assistantMessage);
         playBeep("ready"); playCompletionChime();
-        announceMachine("Result is ready.");
         if (readAloud) speakText(reply, true);
         await refreshHistory();
         return;
@@ -179,8 +177,7 @@
         const assistantMessage = { role: "assistant", content: reply };
         messages.push(assistantMessage); await persistMessage(assistantMessage);
         playBeep("ready"); playCompletionChime();
-        announceMachine("Result is ready.");
-        if (readAloud) speakText(reply, true);
+          if (readAloud) speakText(reply, true);
         await refreshHistory();
         return;
       }
@@ -407,16 +404,15 @@
       const prompt = $("prompt");
       if (prompt) prompt.focus({ preventScroll: true });
     };
-    // Let the startup sound finish first, then announce the ready state aloud.
-    const waitForSound = Math.max(0, startupSequenceEndsAt - performance.now());
+    // Keep the login welcome simple and silent apart from the spoken greeting.
     window.setTimeout(() => {
-      $("welcomeTitle").textContent = "SYSTEM ACTIVATED";
-      $("welcomeSubtitle").textContent = "Welcome, sir. Your AI workspace is ready.";
+      $("welcomeTitle").textContent = "WELCOME SIR";
+      $("welcomeSubtitle").textContent = "Your AI workspace is ready.";
       overlay.classList.add("boot-complete");
-      if (status) status.textContent = "SYSTEM ACTIVATED · READY FOR YOUR COMMAND";
+      if (status) status.textContent = "WELCOME SIR";
       if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance("Welcome, sir. System activated.");
+        const utterance = new SpeechSynthesisUtterance("Welcome, sir.");
         utterance.rate = 0.88;
         utterance.pitch = 0.72;
         utterance.volume = 0.82;
@@ -438,7 +434,7 @@
       } else {
         window.setTimeout(finishBoot, 1200);
       }
-    }, waitForSound);
+    }, 0);
   }
 
   async function initAuth() {
@@ -468,7 +464,7 @@
     };
     $("authSwitch").addEventListener("click", () => setMode(mode === "login" ? "register" : "login"));
     authForm.addEventListener("submit", async e => {
-      e.preventDefault(); playStartupSequence(); startBootOverlay(); authSubmit.disabled = true; authError.textContent = "";
+      e.preventDefault(); startBootOverlay(); authSubmit.disabled = true; authError.textContent = "";
       const email = $("authEmail").value.trim();
       const password = $("authPassword").value;
       try {
