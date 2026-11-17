@@ -114,8 +114,21 @@ function serverError(res, label, error) {
 }
 function validMessages(input) {
   if (!Array.isArray(input)) return [];
-  return input.filter(m => m && ["user", "assistant"].includes(m.role) && typeof m.content === "string")
-    .slice(-24).map(m => ({ role: m.role, content: m.content.slice(0, 8000) }));
+  return input.filter(m => m && ["user", "assistant"].includes(m.role) &&
+    (typeof m.content === "string" || Array.isArray(m.content)))
+    .slice(-24).map(m => {
+      if (typeof m.content === "string") return { role: m.role, content: m.content.slice(0, 8000) };
+      const parts = m.content.slice(0, 4).flatMap(part => {
+        if (part?.type === "text" && typeof part.text === "string") return [{ type: "text", text: part.text.slice(0, 8000) }];
+        if (part?.type === "image_url" && typeof part.image_url?.url === "string" &&
+            /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(part.image_url.url) &&
+            part.image_url.url.length <= 1400000) {
+          return [{ type: "image_url", image_url: { url: part.image_url.url, detail: "auto" } }];
+        }
+        return [];
+      });
+      return { role: m.role, content: parts };
+    }).filter(m => typeof m.content === "string" || m.content.length > 0);
 }
 function passwordHash(password, salt) {
   return crypto.scryptSync(password, salt, 64).toString("hex");
