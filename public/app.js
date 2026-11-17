@@ -14,7 +14,6 @@
   }
 
   let recognition = null, pendingFiles = [], pendingImage = null, cameraStream = null;
-  let recognition = null, pendingFiles = [], pendingImage = null, cameraStream = null;
   let soundEffectsOn = true;
   // No continuous background drone or beeps: only short interface sounds.
   function syncCoreAudio() {}
@@ -589,7 +588,7 @@
   $("mobileMenu").addEventListener("click", () => $("sidebar").classList.toggle("open"));
   $("refreshHistory").addEventListener("click", refreshHistory);
   document.querySelectorAll(".suggestion").forEach(btn => btn.addEventListener("click", () => sendMessage(btn.dataset.prompt)));
-  $("speakToggle").addEventListener("click", () => { readAloud = !readAloud; $("speakToggle").classList.toggle("active", readAloud); toast(readAloud ? "Read aloud enabled for replies" : "Read aloud disabled"); });
+  $("speakToggle").addEventListener("click", () => { readAloud = !readAloud; $("speakToggle").classList.toggle("active", readAloud); $("speakToggle").innerHTML = readAloud ? "◖ <span>Voice replies on</span>" : "◖ <span>Read aloud</span>"; toast(readAloud ? "Voice replies enabled" : "Voice replies disabled"); });
   $("themeBtn").addEventListener("click", () => { document.body.classList.toggle("light"); localStorage.setItem(themeKey, document.body.classList.contains("light") ? "light" : "dark"); });
   if (localStorage.getItem(themeKey) === "light") document.body.classList.add("light");
   $("memoryBtn").addEventListener("click", async () => { try { const result = await api("/api/memory"); $("memoryText").value = result.memory || ""; $("memoryDialog").showModal(); } catch (e) { toast(e.message); } });
