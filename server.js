@@ -10,7 +10,8 @@ const PORT = Number(process.env.PORT || 3000);
 const IS_VERCEL = Boolean(process.env.VERCEL);
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
 const API_BASE = (process.env.AI_BASE_URL || "https://openrouter.ai/api/v1").replace(/\/+$/, "");
-const MODEL = process.env.AI_MODEL || "openrouter/free";
+const MODEL = (process.env.AI_MODEL || "openrouter/free").trim();
+const DEFAULT_MODELS = ["openrouter/free", "nvidia/nemotron-3-ultra-550b-a55b:free", "nvidia/nemotron-3.5-super-vl:free", "inclusionai/ling-3.2-flash:free"];
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 app.disable("x-powered-by");
@@ -140,7 +141,7 @@ function verifyPassword(password, user) {
 }
 
 async function requestAI(messages, options = {}) {
-  const models = [...new Set(options.models || [MODEL, "openrouter/free"])];
+  const models = [...new Set((options.models || [...DEFAULT_MODELS, MODEL]).filter(model => model && !/^baidu\\//i.test(model)))];
   let lastError = null;
   for (const model of models) {
     try {
@@ -434,7 +435,7 @@ app.post("/api/agents", requireUser, async (req, res) => {
 
 
 async function streamAI(messages, res, options = {}) {
-  const models = [...new Set([MODEL, "openrouter/free"])];
+  const models = [...new Set([...DEFAULT_MODELS, MODEL].filter(model => model && !/^baidu\\//i.test(model)))];
   let lastError = null, anyToken = false;
   for (const model of models) {
     try {
