@@ -260,7 +260,6 @@
       const assistantMessage = { role: "assistant", content: finalReply };
       messages.push(assistantMessage); await persistMessage(assistantMessage);
       playBeep("ready"); playCompletionChime();
-      announceMachine("Result is ready.");
       if (readAloud) speakText(finalReply, true);
       await refreshHistory();
     } catch (err) {
