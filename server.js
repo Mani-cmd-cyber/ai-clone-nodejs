@@ -542,7 +542,6 @@ app.post("/api/websites/generate", requireUser, async (req, res) => {
         "nvidia/nemotron-3-ultra-550b-a55b:free",
         "nvidia/nemotron-3.5-super-vl:free",
         "baidu/ernie-5.5-flash-preview:free",
-        "thinkingmachines/inkling-2-small:free",
         "openrouter/free"
       ]
     });
