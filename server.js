@@ -142,14 +142,16 @@ function verifyPassword(password, user) {
 
 async function requestAI(messages, options = {}) {
   const models = [...new Set((options.models || [...DEFAULT_MODELS, MODEL]).filter(model => model && !/^baidu\//i.test(model)))];
+  if (options.totalTimeout) options.deadlineAt = Date.now() + options.totalTimeout;
   let lastError = null;
   for (const model of models) {
+    if (options.deadlineAt && options.deadlineAt - Date.now() < 1500) break;
     try {
       const response = await fetch(API_BASE + "/chat/completions", {
         method: "POST",
         headers: { Authorization: "Bearer " + process.env.AI_API_KEY, "Content-Type": "application/json", "HTTP-Referer": process.env.APP_URL || "https://banana-ai-assistant.vercel.app", "X-Title": "Banana AI" },
-        body: JSON.stringify({ model, messages, temperature: options.temperature ?? 0.4, max_tokens: options.maxTokens ?? 1800 }),
-        signal: AbortSignal.timeout(options.timeout ?? 55000)
+        body: JSON.stringify({ model, messages, temperature: options.temperature ?? 0.4, max_tokens: options.maxTokens ?? 1800, ...(options.responseFormat ? { response_format: options.responseFormat } : {}) }),
+        signal: AbortSignal.timeout(options.totalTimeout ? Math.max(1000, Math.min(options.timeout ?? 55000, options.deadlineAt - Date.now() - 750)) : (options.timeout ?? 55000))
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
@@ -507,7 +509,7 @@ function parseGeneratedWebsite(raw) {
   const title = safeText(parsed.title, 100) || "Your new website";
   const description = safeText(parsed.description, 240);
   const html = typeof parsed.html === "string" ? parsed.html.trim() : "";
-  if (!html || html.length > 180000 || !/<html[\s>]/i.test(html) || !/<body[\s>]/i.test(html)) {
+  if (!html || html.length > 70000 || !/<html[\s>]/i.test(html) || !/<body[\s>]/i.test(html)) {
     throw new Error("The generated website was incomplete. Please try again with a simpler prompt.");
   }
   return { title, description, html };
@@ -521,7 +523,7 @@ app.post("/api/websites/generate", requireUser, async (req, res) => {
     if (prompt.length < 8) return res.status(400).json({ error: "Please describe the website you want in a little more detail." });
     const system = [
       "You are Banana AI's expert autonomous website designer and front-end engineer.",
-      "Create a polished, complete, visually impressive, responsive website from the user's brief.",
+      "Create a polished, complete, visually impressive, responsive website from the user's brief. Prioritize a complete compact page over excessive code.",
       "Return ONLY valid JSON with exactly these string fields: title, description, html. No markdown fences.",
       "The html field must contain a complete standalone HTML5 document with inline CSS and JavaScript.",
       "Design requirements: strong visual identity, premium typography, deliberate color palette, beautiful hero section, real useful sections, clear navigation, responsive mobile layout, accessible contrast, hover/focus states, polished buttons, realistic sample content, and thoughtful spacing.",
@@ -530,19 +532,20 @@ app.post("/api/websites/generate", requireUser, async (req, res) => {
       "Do not include any claims that the website is actually connected to payment, booking, email, databases, or APIs unless the user supplied such integrations. For forms, provide front-end validation and a clear demo-success state only.",
       "Do not request, expose, store, or transmit secrets, credentials, or personal data. Do not include malware, tracking pixels, crypto miners, hidden redirects, or obfuscated code.",
       "The page is served in an isolated sandboxed document. Keep all styling and scripts inside the returned HTML; do not depend on the Banana AI app's cookies or APIs.",
-      "Keep the entire HTML document under 150 KB. Return only the JSON object."
+      "Keep the entire HTML document under 45 KB and use compact, efficient markup. Return only the JSON object."
     ].join("\n");
     const result = await requestAI([
       { role: "system", content: system },
       { role: "user", content: "Build this website:\n" + prompt }
     ], {
-      temperature: 0.55,
-      maxTokens: 6500,
-      timeout: 25000,
+      temperature: 0.35,
+      maxTokens: 3800,
+      timeout: 15000,
+      totalTimeout: 47000,
+      responseFormat: { type: "json_object" },
       models: [
         "openrouter/free",
         "nvidia/nemotron-3-ultra-550b-a55b:free",
-        "nvidia/nemotron-3.5-super-vl:free",
         "inclusionai/ling-3.2-flash:free"
       ]
     });
