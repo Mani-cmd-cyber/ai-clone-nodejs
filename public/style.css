@@ -340,3 +340,10 @@ body.light .composer{background:rgba(255,255,255,.96)}
 @keyframes bootSpark{from{opacity:.25;transform:translate3d(0,0,0) scale(.7)}to{opacity:1;transform:translate3d(10px,-14px,0) scale(1.4)}}
 @keyframes bootFinalFlash{0%{filter:brightness(1);transform:scale(1)}45%{filter:brightness(2.3);transform:scale(1.14)}100%{filter:brightness(1.15);transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.boot-grid,.boot-spark,.welcome-overlay:before,.welcome-overlay:after{animation:none!important}.boot-progress span{animation-duration:1s}}
+
+/* Camera capture dialog */
+.camera-dialog{width:min(620px,calc(100vw - 28px))}
+.camera-preview{display:block;width:100%;max-height:58vh;min-height:180px;object-fit:contain;background:#050812;border:1px solid rgba(103,232,249,.22);border-radius:12px}
+.camera-actions{display:flex;justify-content:flex-end;margin-top:14px}
+.camera-actions .primary-btn{padding:10px 16px;border:1px solid rgba(103,232,249,.35);border-radius:10px;background:linear-gradient(120deg,#5141a5,#087b8a);color:#fff;cursor:pointer}
+@media(max-width:600px){.camera-preview{max-height:48vh;min-height:150px}}
