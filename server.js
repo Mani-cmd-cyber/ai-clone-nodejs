@@ -141,7 +141,7 @@ function verifyPassword(password, user) {
 }
 
 async function requestAI(messages, options = {}) {
-  const models = [...new Set((options.models || [...DEFAULT_MODELS, MODEL]).filter(model => model && !/^baidu\\//i.test(model)))];
+  const models = [...new Set((options.models || [...DEFAULT_MODELS, MODEL]).filter(model => model && !/^baidu\//i.test(model)))];
   let lastError = null;
   for (const model of models) {
     try {
@@ -435,7 +435,7 @@ app.post("/api/agents", requireUser, async (req, res) => {
 
 
 async function streamAI(messages, res, options = {}) {
-  const models = [...new Set([...DEFAULT_MODELS, MODEL].filter(model => model && !/^baidu\\//i.test(model)))];
+  const models = [...new Set([...DEFAULT_MODELS, MODEL].filter(model => model && !/^baidu\//i.test(model)))];
   let lastError = null, anyToken = false;
   for (const model of models) {
     try {
