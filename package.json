@@ -9,7 +9,7 @@
     "dev": "node server.js"
   },
   "engines": {
-    "node": ">=18.17"
+    "node": "24.x"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
