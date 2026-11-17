@@ -536,13 +536,11 @@ app.post("/api/websites/generate", requireUser, async (req, res) => {
       { role: "user", content: "Build this website:\n" + prompt }
     ], {
       temperature: 0.55,
-      maxTokens: 12000,
-      timeout: 110000,
+      maxTokens: 6500,
+      timeout: 25000,
       models: [
-        "nvidia/nemotron-3-ultra-550b-a55b:free",
-        "nvidia/nemotron-3.5-super-vl:free",
-        "baidu/ernie-5.5-flash-preview:free",
-        "openrouter/free"
+        "openrouter/free",
+        "baidu/ernie-5.5-flash-preview:free"
       ]
     });
     const site = parseGeneratedWebsite(result.reply);
