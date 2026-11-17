@@ -591,13 +591,44 @@
   $("clearMemory").addEventListener("click", async () => { try { await api("/api/memory", { method: "PUT", body: JSON.stringify({ memory: "" }) }); $("memoryText").value = ""; $("memoryDialog").close(); toast("Your saved memory was cleared"); } catch (e) { toast(e.message); } });
   document.querySelectorAll(".nav-item").forEach(btn => btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-item").forEach(x => x.classList.remove("active")); btn.classList.add("active");
-    const mode = btn.dataset.mode, research = mode === "research", world = mode === "world";
-    $("topMode").textContent = world ? "World Monitor" : research ? "Web Research" : "AI Assistant";
+    const mode = btn.dataset.mode, research = mode === "research", world = mode === "world", builder = mode === "builder";
+    $("topMode").textContent = world ? "World Monitor" : research ? "Web Research" : builder ? "Website Builder" : "AI Assistant";
     $("researchToggle").checked = research; $("sidebar").classList.remove("open");
-    $("worldMonitor").hidden = !world; $("assistantStage").hidden = world; messagesEl.hidden = world; syncCoreAudio();
-    if (world) { welcome.hidden = true; promptInput.placeholder = "Ask Banana about the world, or use the dashboard above…"; $("agentSelect").value = "researcher"; $("researchToggle").checked = true; loadWorldMonitor(); }
-    else { showWelcomeIfEmpty(); if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; } else { promptInput.placeholder = "Ask Banana anything..."; } }
-    promptInput.focus();
+    $("worldMonitor").hidden = !world; $("websiteBuilder").hidden = !builder;
+    $("assistantStage").hidden = world || builder; messagesEl.hidden = world || builder; welcome.hidden = world || builder || messages.length > 0;
+    $("composerWrap").hidden = builder;
+    syncCoreAudio();
+    if (world) { promptInput.placeholder = "Ask Banana about the world, or use the dashboard above…"; $("agentSelect").value = "researcher"; $("researchToggle").checked = true; loadWorldMonitor(); }
+    else if (builder) { $("websitePrompt").focus(); }
+    else { showWelcomeIfEmpty(); if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; } else { promptInput.placeholder = "Ask Banana anything..."; } promptInput.focus(); }
+  }));
+  $("websiteForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    const prompt = $("websitePrompt").value.trim();
+    if (prompt.length < 8) return toast("Please describe your website in a little more detail.");
+    const button = $("generateWebsite");
+    button.disabled = true; button.textContent = "Creating your website…";
+    $("builderStatus").textContent = "Banana is planning the design, writing the page and preparing your live link. This can take a minute.";
+    $("websiteResult").hidden = true;
+    try {
+      const result = await api("/api/websites/generate", { method: "POST", body: JSON.stringify({ prompt }) });
+      const url = new URL(result.url, window.location.origin).href;
+      $("websiteTitle").textContent = result.title;
+      $("websiteDescription").textContent = result.description || "Your new responsive website is ready.";
+      $("websiteUrlText").textContent = url;
+      $("openWebsiteLink").href = url;
+      $("websitePreview").src = url;
+      $("websiteResult").hidden = false;
+      $("builderStatus").textContent = "Your website is live. Share the link with anyone.";
+      $("copyWebsiteLink").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("Website link copied."); } catch { toast("Copy unavailable. Select the link above."); } };
+      $("websiteResult").scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (error) {
+      $("builderStatus").textContent = error.message || "Could not generate the website. Please try again.";
+    } finally { button.disabled = false; button.textContent = "✧ Generate my website"; }
+  });
+  document.querySelectorAll("[data-example]").forEach(button => button.addEventListener("click", () => {
+    $("websitePrompt").value = button.dataset.example;
+    $("websitePrompt").focus();
   }));
   function worldDate(value) { if (!value) return "Time unavailable"; const date = new Date(value); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString(); }
   function renderWorldMonitor(data) {
