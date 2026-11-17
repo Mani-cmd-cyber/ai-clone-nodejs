@@ -37,6 +37,7 @@
     <button class="nav-item active" data-mode="chat"><span>◈</span> AI Chat</button>
     <button class="nav-item" data-mode="research"><span>⌕</span> Web research</button>
      <button class="nav-item" data-mode="world"><span>◎</span> World Monitor</button>
+    <button class="nav-item" data-mode="builder"><span>✧</span> Website Builder</button>
     <div class="history-head"><span>RECENT CHATS</span><button id="refreshHistory" title="Refresh history">↻</button></div>
     <div id="historyList" class="history-list"><div class="history-empty">Your conversations will appear here.</div></div>
     <div class="sidebar-bottom"><div class="online-dot"></div><div><strong>Banana AI</strong><small>Your ideas, amplified.</small></div><span class="version">BETA</span></div>
@@ -81,8 +82,24 @@
   <div class="world-header"><div><div class="eyebrow"><span class="eyebrow-line"></span> LIVE PUBLIC DATA <span class="eyebrow-line"></span></div><h2>World Monitor</h2><p>Earthquakes, natural events and global headlines from public sources.</p></div><button id="worldRefresh" class="quiet-btn" type="button">↻ Refresh</button></div>
   <div id="worldContent"><p class="modal-copy">Loading public world data…</p></div>
 </div>
+
+<div id="websiteBuilder" class="website-builder" hidden>
+  <div class="builder-heading"><div class="eyebrow"><span class="eyebrow-line"></span> PROMPT TO PUBLISHED WEBSITE <span class="eyebrow-line"></span></div><h2>What should we build?</h2><p>Describe any website in plain language. Banana will design it, make it responsive, and publish a shareable link.</p></div>
+  <form id="websiteForm" class="builder-form">
+    <label for="websitePrompt">Your website idea</label>
+    <textarea id="websitePrompt" maxlength="5000" rows="5" placeholder="Example: Create a premium black-and-gold website for a luxury car rental company in Dubai. Include a bold hero, fleet cards, services, customer reviews, FAQs and a booking inquiry form." required></textarea>
+    <div class="builder-form-bottom"><span>Detailed prompts create better results · Up to 5,000 characters</span><button id="generateWebsite" class="primary-btn" type="submit">✧ Generate my website</button></div>
+  </form>
+  <div id="builderStatus" class="builder-status" aria-live="polite"></div>
+  <section id="websiteResult" class="website-result" hidden>
+    <div class="website-result-head"><div><span class="builder-success">WEBSITE PUBLISHED</span><h3 id="websiteTitle">Your website</h3><p id="websiteDescription"></p></div><div class="website-result-actions"><button id="copyWebsiteLink" class="quiet-btn" type="button">Copy link</button><a id="openWebsiteLink" class="primary-btn" href="#" target="_blank" rel="noopener noreferrer">Open live website ↗</a></div></div>
+    <div class="website-link-line"><span id="websiteUrlText"></span></div>
+    <iframe id="websitePreview" class="website-preview" title="Generated website preview" loading="lazy" sandbox="allow-scripts allow-forms"></iframe>
+  </section>
+  <div class="builder-examples"><span>TRY AN IDEA</span><button type="button" data-example="A modern portfolio website for a creative web designer, with a bold intro, project gallery, about section, skills, testimonials and contact form.">Creative portfolio</button><button type="button" data-example="A premium restaurant website with a cinematic food hero, menu cards, chef story, customer reviews, location and reservation inquiry form.">Luxury restaurant</button><button type="button" data-example="A professional SaaS landing page for an AI productivity tool, with product benefits, feature cards, pricing plans, testimonials and FAQ.">SaaS landing page</button></div>
+</div>
     </section>
-    <div class="composer-wrap">
+    <div class="composer-wrap" id="composerWrap">
       <div class="tool-row">
         <label class="agent-label">ASSISTANT MODE</label>
         <select id="agentSelect" aria-label="Assistant mode">
