@@ -160,7 +160,7 @@
           const entry = "- " + fact;
           const alreadySaved = current.toLowerCase().includes(fact.toLowerCase());
           if (alreadySaved) reply = "That detail is already in your private account memory.";
-          else { const memory = (current ? current + "\\n" : "") + entry; await api("/api/memory", { method: "PUT", body: JSON.stringify({ memory: memory.slice(-2500) }) }); reply = "Saved to your private Banana AI memory: " + fact; }
+          else { const memory = (current ? current + "\\n" : "") + entry; await api("/api/memory", { method: "PUT", body: JSON.stringify({ memory: memory.slice(-2500) }) }); reply = "Saved to your private JARVIS AI memory: " + fact; }
         }
         responseBody.textContent = reply;
         const assistantMessage = { role: "assistant", content: reply };
@@ -277,7 +277,7 @@
   }
   
   function renderCouncil(agents) {
-    return `<div class="research-results"><h4>✳ BANANA AI COUNCIL · ${agents.length} SPECIALISTS</h4>${agents.map(agent => `<section class="research-result"><strong>${escapeHtml(agent.name)}</strong><p>${formatText(agent.answer)}</p></section>`).join("")}</div>`;
+    return `<div class="research-results"><h4>✳ JARVIS AI COUNCIL · ${agents.length} SPECIALISTS</h4>${agents.map(agent => `<section class="research-result"><strong>${escapeHtml(agent.name)}</strong><p>${formatText(agent.answer)}</p></section>`).join("")}</div>`;
   }
   function speakJarvis(text, options = {}) {
     if (!("speechSynthesis" in window)) return;
@@ -442,7 +442,7 @@
     const setMode = next => {
       mode = next;
       $("authHeading").textContent = mode === "login" ? "Welcome back" : "Create your account";
-      $("authSubheading").textContent = mode === "login" ? "Log in to continue to your private workspace." : "Create an account and start using Banana AI instantly.";
+      $("authSubheading").textContent = mode === "login" ? "Log in to continue to your private workspace." : "Create an account and start using JARVIS AI instantly.";
       authSubmit.textContent = mode === "login" ? "Log in" : "Create account";
       $("authNameField").hidden = false;
       $("authNameLabel").textContent = mode === "register" ? "Your name" : "Your name (for personalized welcome)";
@@ -485,14 +485,74 @@
 
   function setupVoice() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) { $("voiceBtn").addEventListener("click", () => toast("Voice input is not supported here. Try Chrome or Edge.")); return; }
-    recognition = new SpeechRecognition(); recognition.lang = $("voiceLanguage").value || "ur-PK"; recognition.interimResults = true; recognition.continuous = false;
-    $("voiceLanguage").addEventListener("change", () => { if (recognition) recognition.lang = $("voiceLanguage").value; toast("Voice language: " + $("voiceLanguage").selectedOptions[0].text); });
-    recognition.onstart = () => { $("voiceBtn").classList.add("active"); $("voiceBtn").innerHTML = "● <span>Listening…</span>"; };
-    recognition.onend = () => { $("voiceBtn").classList.remove("active"); $("voiceBtn").innerHTML = "♩ <span>Voice</span>"; };
-    recognition.onerror = e => toast(e.error === "not-allowed" ? "Please allow microphone access." : "Voice input stopped: " + e.error);
-    recognition.onresult = event => { let finalText = ""; for (let i = event.resultIndex; i < event.results.length; i++) finalText += event.results[i][0].transcript; promptInput.value = finalText; promptInput.dispatchEvent(new Event("input")); };
-    $("voiceBtn").addEventListener("click", () => { try { recognition.start(); } catch { recognition.stop(); } });
+    const button = $("voiceBtn");
+    let listening = false;
+    let finalTranscript = "";
+    if (!SpeechRecognition) {
+      button.title = "Speech recognition is not supported by this browser";
+      button.addEventListener("click", () => toast("Voice recognition needs Chrome or Edge. Open JARVIS in an updated browser."));
+      button.classList.add("voice-unavailable");
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.lang = $("voiceLanguage").value || "ur-PK";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+    button.title = "Start voice recognition. Click again to stop.";
+    $("voiceLanguage").addEventListener("change", () => {
+      if (recognition && !listening) recognition.lang = $("voiceLanguage").value;
+      toast("Voice language: " + $("voiceLanguage").selectedOptions[0].text);
+    });
+    recognition.onstart = () => {
+      listening = true;
+      finalTranscript = "";
+      button.classList.add("active");
+      button.setAttribute("aria-pressed", "true");
+      button.innerHTML = "● <span>Listening…</span>";
+      setAssistantStage("LISTENING · " + $("voiceLanguage").selectedOptions[0].text.toUpperCase(), false);
+    };
+    recognition.onend = () => {
+      listening = false;
+      button.classList.remove("active");
+      button.setAttribute("aria-pressed", "false");
+      button.innerHTML = "♩ <span>Voice</span>";
+      setAssistantStage("VOICE INPUT READY", false);
+      if (finalTranscript.trim()) {
+        promptInput.value = finalTranscript.trim();
+        promptInput.dispatchEvent(new Event("input"));
+        toast("Voice captured. Review your words, then press Send.");
+      }
+    };
+    recognition.onerror = event => {
+      const messages = {
+        "not-allowed": "Microphone permission blocked. Allow microphone access in your browser settings.",
+        "service-not-allowed": "Speech recognition service is blocked by the browser.",
+        "audio-capture": "No microphone detected. Check your input device.",
+        "no-speech": "No speech detected. Try speaking closer to the microphone.",
+        "network": "Voice recognition needs an internet connection.",
+        "aborted": "Voice recognition stopped."
+      };
+      if (event.error !== "aborted") toast(messages[event.error] || ("Voice recognition error: " + event.error));
+    };
+    recognition.onnomatch = () => toast("No clear words detected. Try again or change the voice language.");
+    recognition.onresult = event => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript || "";
+        if (event.results[i].isFinal) finalTranscript += transcript + " ";
+        else interim += transcript;
+      }
+      promptInput.value = (finalTranscript + interim).trim();
+      promptInput.dispatchEvent(new Event("input"));
+    };
+    button.addEventListener("click", () => {
+      if (listening) { try { recognition.stop(); } catch {} return; }
+      finalTranscript = "";
+      promptInput.value = "";
+      try { recognition.lang = $("voiceLanguage").value || "ur-PK"; recognition.start(); }
+      catch (error) { toast("Could not start microphone. Check browser permission and try again."); }
+    });
   }
   form.addEventListener("submit", e => { e.preventDefault(); sendMessage(promptInput.value); });
   promptInput.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
@@ -600,7 +660,7 @@
     syncCoreAudio();
     if (world) { promptInput.placeholder = "Ask Banana about the world, or use the dashboard above…"; $("agentSelect").value = "researcher"; $("researchToggle").checked = true; loadWorldMonitor(); }
     else if (builder) { $("websitePrompt").focus(); }
-    else { showWelcomeIfEmpty(); if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; } else { promptInput.placeholder = "Ask Banana anything..."; } promptInput.focus(); }
+    else { showWelcomeIfEmpty(); if (research) { promptInput.placeholder = "What would you like me to research?"; $("agentSelect").value = "researcher"; } else { promptInput.placeholder = "Ask JARVIS anything..."; } promptInput.focus(); }
   }));
   $("websiteForm").addEventListener("submit", async event => {
     event.preventDefault();
@@ -608,7 +668,7 @@
     if (prompt.length < 8) return toast("Please describe your website in a little more detail.");
     const button = $("generateWebsite");
     button.disabled = true; button.textContent = "Creating your website…";
-    $("builderStatus").textContent = "Banana is planning the design, writing the page and preparing your live link. This can take a minute.";
+    $("builderStatus").textContent = "JARVIS is planning the design, writing the page and preparing your live link. This can take a minute.";
     $("websiteResult").hidden = true;
     try {
       const result = await api("/api/websites/generate", { method: "POST", body: JSON.stringify({ prompt }) });
@@ -683,7 +743,7 @@
     try {
       const health = await fetch("http://127.0.0.1:4317/health", { cache: "no-store" });
       if (!health.ok) throw new Error("Local companion is not responding.");
-      if (!confirm("Allow Banana AI to " + label + "?")) return "Cancelled. No computer action was taken.";
+      if (!confirm("Allow JARVIS AI to " + label + "?")) return "Cancelled. No computer action was taken.";
       const response = await fetch("http://127.0.0.1:4317/action", { method: "POST", headers: { "Content-Type": "application/json", "X-Banana-Token": token }, body: JSON.stringify(payload), cache: "no-store" });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "The local companion rejected the action.");
@@ -694,7 +754,7 @@
     const token = $("computerToken").value.trim() || localStorage.getItem(companionTokenKey) || "";
     if (!token) return setComputerStatus("Paste and save the local pairing token first.", true);
     if (!await checkComputerCompanion()) return;
-    if (!confirm("Allow Banana AI to " + label + "?")) return;
+    if (!confirm("Allow JARVIS AI to " + label + "?")) return;
     try {
       const response = await fetch("http://127.0.0.1:4317/action", { method: "POST", headers: { "Content-Type": "application/json", "X-Banana-Token": token }, body: JSON.stringify(payload), cache: "no-store" });
       const data = await response.json().catch(() => ({}));
