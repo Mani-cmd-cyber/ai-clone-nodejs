@@ -355,3 +355,34 @@ body.light .composer{background:rgba(255,255,255,.96)}
 .builder-form label{display:block;font-size:12px;font-weight:700;margin-bottom:9px}.builder-form textarea{width:100%;resize:vertical;min-height:130px;padding:14px;border:1px solid rgba(167,139,250,.22);border-radius:11px;background:#0d1424;color:#f3f4ff;font:inherit;font-size:13px;line-height:1.7;outline:none}.builder-form textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #67e8f918}.builder-form-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:13px}.builder-form-bottom span{font-size:10px;color:var(--muted)}.builder-form .primary-btn,.website-result .primary-btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 15px;border:0;border-radius:10px;background:linear-gradient(120deg,#6851c5,#087e91);color:#fff;font-size:12px;font-weight:800;text-decoration:none;cursor:pointer}.builder-form button:disabled{opacity:.6;cursor:wait}
 .builder-status{max-width:820px;margin:17px auto;color:#9ca9c5;font-size:12px;line-height:1.6}.builder-success{font:9px 'DM Mono',monospace;letter-spacing:1.3px;color:#69e6b1}.website-result{max-width:100%;margin:20px auto 0;padding:17px;border:1px solid rgba(105,230,177,.25);border-radius:16px;background:#0b1420}.website-result-head{display:flex;justify-content:space-between;align-items:center;gap:18px}.website-result h3{margin:7px 0 4px;font-size:20px}.website-result p{margin:0;color:var(--muted);font-size:11px}.website-result-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.website-result-actions .quiet-btn{padding:10px 13px;border:1px solid #ffffff20;border-radius:9px;color:var(--text);background:#ffffff08}.website-link-line{margin:13px 0;padding:10px 12px;border-radius:8px;background:#050a13;color:var(--cyan);font:11px 'DM Mono',monospace;overflow-wrap:anywhere}.website-preview{display:block;width:100%;height:min(72vh,760px);border:1px solid #ffffff20;border-radius:12px;background:white}.builder-examples{display:flex;justify-content:center;align-items:center;gap:9px;flex-wrap:wrap;margin:20px auto 0}.builder-examples>span{font:9px 'DM Mono',monospace;color:var(--muted);letter-spacing:1px}.builder-examples button{padding:8px 11px;border:1px solid #ffffff18;border-radius:999px;background:#ffffff08;color:#c7d2e9;font-size:10px}.builder-examples button:hover{border-color:#67e8f966;color:var(--cyan)}
 @media(max-width:700px){.website-builder{padding:15px 11px;margin:4px auto 20px;border-radius:15px}.builder-form{padding:13px}.builder-form-bottom,.website-result-head{align-items:stretch;flex-direction:column}.builder-form-bottom .primary-btn,.website-result-actions{width:100%}.website-result-actions>*{flex:1}.website-preview{height:66vh}.builder-examples{justify-content:flex-start}.builder-examples>span{width:100%}}
+
+
+/* JARVIS neural atmosphere: animated HUD grid, energy fields and data particles */
+.shell{position:relative;isolation:isolate;background:transparent;overflow:hidden}
+.shell::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:
+ radial-gradient(ellipse at 72% 18%,rgba(28,110,170,.22),transparent 36%),
+ radial-gradient(ellipse at 22% 82%,rgba(102,55,180,.18),transparent 38%),
+ radial-gradient(circle at 50% 48%,rgba(12,38,66,.42),transparent 58%),
+ linear-gradient(135deg,#050914 0%,#080d1a 48%,#070915 100%);background-size:140% 140%;animation:jarvisAtmosphere 18s ease-in-out infinite alternate}
+.shell::after{content:"";position:fixed;inset:-30%;z-index:-1;pointer-events:none;opacity:.28;background-image:
+ linear-gradient(rgba(85,196,235,.11) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(85,196,235,.11) 1px,transparent 1px),
+ radial-gradient(circle,rgba(103,232,249,.85) 1px,transparent 2px),
+ radial-gradient(circle,rgba(167,139,250,.75) 1px,transparent 2px);
+ background-size:54px 54px,54px 54px,190px 170px,260px 230px;
+ background-position:0 0,0 0,22px 34px,110px 80px;
+ mask-image:radial-gradient(ellipse at 55% 45%,#000 12%,transparent 78%);
+ animation:jarvisDataDrift 34s linear infinite}
+.sidebar{background:rgba(5,9,19,.84);backdrop-filter:blur(22px)}
+.topbar{background:rgba(5,9,19,.58);backdrop-filter:blur(18px)}
+.chat-area{background:radial-gradient(ellipse at 50% 30%,rgba(20,72,105,.08),transparent 60%)}
+.assistant-stage{border-color:rgba(103,232,249,.27);box-shadow:inset 0 0 70px rgba(18,88,130,.13),0 18px 70px #0006,0 0 45px rgba(103,232,249,.06)}
+.stage-orb-halo{background:conic-gradient(from 0deg,rgba(103,232,249,.42),rgba(167,139,250,.35),rgba(103,232,249,.42));filter:blur(38px)}
+.voice-unavailable{opacity:.55}
+#voiceBtn.active{color:#69e6b1;border-color:#69e6b177;background:#69e6b116;box-shadow:0 0 18px #69e6b122}
+#voiceBtn.active span{color:#a7f3d0}
+body.light .shell::before{background:radial-gradient(ellipse at 72% 18%,rgba(28,110,170,.12),transparent 36%),radial-gradient(ellipse at 22% 82%,rgba(102,55,180,.1),transparent 38%),linear-gradient(135deg,#eaf1fb,#f6f4ff)}
+body.light .shell::after{opacity:.12}
+@keyframes jarvisAtmosphere{0%{background-position:0% 40%}100%{background-position:100% 60%}}
+@keyframes jarvisDataDrift{from{transform:translate3d(0,0,0) rotate(0deg)}to{transform:translate3d(2%,1%,0) rotate(2deg)}}
+@media(prefers-reduced-motion:reduce){.shell::before,.shell::after{animation:none!important}}
