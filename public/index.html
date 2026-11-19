@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#080a12">
-  <meta name="description" content="Banana AI personal assistant">
-  <title>Banana AI — Personal Assistant</title>
+  <meta name="description" content="JARVIS AI personal assistant">
+  <title>JARVIS AI — Personal AI Assistant</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <div id="authGate" class="auth-gate">
   <section class="auth-card" aria-labelledby="authHeading">
-    <a class="brand auth-brand" href="/" aria-label="Banana AI home"><span class="brand-mark">✳</span><span>banana<span class="brand-ai">.ai</span></span></a>
+    <a class="brand auth-brand" href="/" aria-label="JARVIS AI home"><span class="brand-mark">✳</span><span>banana<span class="brand-ai">.ai</span></span></a>
     <div class="auth-eyebrow">YOUR PRIVATE AI WORKSPACE</div>
     <div class="auth-orb-scene" aria-hidden="true"><div class="auth-orb"><span>✳</span></div><div class="auth-orbit auth-orbit-a"></div><div class="auth-orbit auth-orbit-b"></div><div class="auth-orbit auth-orbit-c"></div><div class="auth-scene-glow"></div></div>
     <h1 id="authHeading">Welcome back</h1>
@@ -28,10 +28,10 @@
     <p class="auth-footnote">Your conversations are private to your account.</p>
   </section>
 </div>
-<div id="welcomeOverlay" class="welcome-overlay" hidden aria-live="polite"><div class="boot-grid" aria-hidden="true"></div><div class="welcome-scene"><div class="welcome-core"><span>✳</span></div><div class="welcome-orbit welcome-orbit-one"></div><div class="welcome-orbit welcome-orbit-two"></div><div class="welcome-orbit welcome-orbit-three"></div><i class="boot-spark boot-spark-one"></i><i class="boot-spark boot-spark-two"></i><i class="boot-spark boot-spark-three"></i></div><div class="welcome-kicker"><span class="boot-dot"></span> BANANA INTELLIGENCE CORE · BOOT SEQUENCE</div><h2 id="welcomeTitle">SYSTEM ACTIVATED</h2><p id="welcomeSubtitle">Initializing secure AI workspace…</p><div class="boot-progress" aria-hidden="true"><span></span></div><div class="boot-caption">NEURAL CORE · ONLINE <span>ENCRYPTED SESSION</span></div></div>
+<div id="welcomeOverlay" class="welcome-overlay" hidden aria-live="polite"><div class="boot-grid" aria-hidden="true"></div><div class="welcome-scene"><div class="welcome-core"><span>✳</span></div><div class="welcome-orbit welcome-orbit-one"></div><div class="welcome-orbit welcome-orbit-two"></div><div class="welcome-orbit welcome-orbit-three"></div><i class="boot-spark boot-spark-one"></i><i class="boot-spark boot-spark-two"></i><i class="boot-spark boot-spark-three"></i></div><div class="welcome-kicker"><span class="boot-dot"></span> JARVIS INTELLIGENCE CORE · BOOT SEQUENCE</div><h2 id="welcomeTitle">SYSTEM ACTIVATED</h2><p id="welcomeSubtitle">Initializing secure AI workspace…</p><div class="boot-progress" aria-hidden="true"><span></span></div><div class="boot-caption">NEURAL CORE · ONLINE <span>ENCRYPTED SESSION</span></div></div>
 <div class="shell">
   <aside class="sidebar" id="sidebar">
-    <a class="brand" href="/" aria-label="Banana AI home"><span class="brand-mark">✳</span><span>banana<span class="brand-ai">.ai</span></span></a>
+    <a class="brand" href="/" aria-label="JARVIS AI home"><span class="brand-mark">✳</span><span>banana<span class="brand-ai">.ai</span></span></a>
     <button id="newChat" class="new-chat"><span>＋</span> New conversation</button>
     <div class="side-label">WORKSPACE</div>
     <button class="nav-item active" data-mode="chat"><span>◈</span> AI Chat</button>
@@ -40,7 +40,7 @@
     <button class="nav-item" data-mode="builder"><span>✧</span> Website Builder</button>
     <div class="history-head"><span>RECENT CHATS</span><button id="refreshHistory" title="Refresh history">↻</button></div>
     <div id="historyList" class="history-list"><div class="history-empty">Your conversations will appear here.</div></div>
-    <div class="sidebar-bottom"><div class="online-dot"></div><div><strong>Banana AI</strong><small>Your ideas, amplified.</small></div><span class="version">BETA</span></div>
+    <div class="sidebar-bottom"><div class="online-dot"></div><div><strong>JARVIS AI</strong><small>Your personal AI, online.</small></div><span class="version">BETA</span></div>
   </aside>
   <main class="main">
     <header class="topbar">
@@ -49,7 +49,7 @@
       <div class="top-actions"><span id="accountEmail" class="account-email"></span><button id="logoutBtn" class="quiet-btn" type="button" title="Log out">Log out</button><button id="computerBtn" class="quiet-btn" type="button" title="Connect safe Windows actions">⌘ <span>Computer</span></button><button id="memoryBtn" class="quiet-btn" title="Edit your saved memory">♧ <span>Memory</span></button><button id="ambienceBtn" class="quiet-btn ambience-btn" type="button" aria-pressed="true" title="Toggle short interface and completion sounds">♫ <span>Sounds on</span></button><button id="themeBtn" class="icon-btn" title="Toggle appearance">◐</button></div>
     </header>
     <section class="chat-area" id="chatArea">
-      <div id="assistantStage" class="assistant-stage" aria-label="Banana AI holographic status">
+      <div id="assistantStage" class="assistant-stage" aria-label="JARVIS AI holographic status">
         <div class="stage-scanlines" aria-hidden="true"></div>
         <div class="stage-orb-system" aria-hidden="true">
           <div class="stage-orb-halo"></div><div class="stage-orbit stage-orbit-a"></div><div class="stage-orbit stage-orbit-b"></div><div class="stage-orbit stage-orbit-c"></div>
@@ -112,7 +112,7 @@
         <textarea id="prompt" rows="1" maxlength="8000" placeholder="Ask Banana anything..." autocomplete="off"></textarea>
         <div class="composer-bottom"><div class="composer-tools"><input id="fileInput" type="file" multiple hidden accept=".txt,.md,.csv,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.xml,.log,.yaml,.yml,.sql,.m,.cpp,.c,.h,.java,.sh,.ps1,.pdf,.docx"><button type="button" id="attachBtn" class="tool-btn" title="Attach a text or code file">📎 <span>Attach file</span></button><button type="button" id="cameraBtn" class="tool-btn" title="Take a photo with your camera">▣ <span>Camera</span></button><select id="voiceLanguage" aria-label="Voice input language" title="Voice input language"><option value="ur-PK">Urdu</option><option value="en-US">English</option><option value="hi-IN">Hindi</option></select><button type="button" id="voiceBtn" class="tool-btn" title="Voice input">♩ <span>Voice</span></button><button type="button" id="speakToggle" class="tool-btn" title="Toggle spoken responses">◖ <span>Read aloud</span></button><span class="tool-hint">Enter to send · Shift+Enter for new line</span></div><button id="send" class="send-btn" type="submit" aria-label="Send message">↑</button></div>
       </form>
-      <div class="disclaimer">Banana can make mistakes. Verify important information. <span>·</span> Your API key stays on the server.</div>
+      <div class="disclaimer">JARVIS can make mistakes. Verify important information. <span>·</span> Your API key stays on the server.</div>
     </div>
   </main>
 </div>
